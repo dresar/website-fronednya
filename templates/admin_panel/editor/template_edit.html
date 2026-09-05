@@ -1,0 +1,863 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{% if is_create_mode %}Create Template{% else %}Editor: {{ theme.name }}{% endif %} - Invywed Admin{% endblock %}
+{% block page_title %}{% if is_create_mode %}Create New Template{% else %}Template Editor: {{ theme.name }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if is_create_mode %}Create a new invitation template{% else %}Edit HTML template and view endpoints{% endif %}{% endblock %}
+
+{% block content %}
+<!-- Action Buttons -->
+<div class="mb-4 md:mb-6 flex items-center space-x-3 flex-wrap">
+    {% if is_create_mode %}
+    <button onclick="createTemplate()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+        <i class="fas fa-save mr-2"></i>Create Template
+    </button>
+    {% else %}
+    <button onclick="saveHTMLContent()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+        <i class="fas fa-save mr-2"></i>Save HTML
+    </button>
+    {% endif %}
+    <a href="{% url 'admin_panel:editor_template_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
+        <i class="fas fa-arrow-left mr-2"></i>Back to List
+    </a>
+</div>
+
+{% if is_create_mode %}
+<!-- Create Template Form -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-plus-circle mr-2 text-indigo-600"></i>
+            Template Information
+        </h3>
+    </div>
+    
+    <form id="createTemplateForm" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_template">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Basic Info -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Template Name *</label>
+                    <input type="text" name="name" id="template_name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter template name">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    <select name="category" id="template_category" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Select category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">HTML File *</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <i class="fas fa-file-code text-gray-400 text-3xl"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="html_file" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+                                    <span>Upload HTML file</span>
+                                    <input id="html_file" name="html_file" type="file" accept=".html" required class="sr-only">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">HTML files only (.html)</p>
+                            <p id="htmlFileName" class="text-xs text-indigo-600 mt-2 font-medium"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: CSS, JS, Images -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CSS File (Optional)</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <i class="fas fa-paint-brush text-gray-400 text-3xl"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="css_file" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+                                    <span>Upload CSS file</span>
+                                    <input id="css_file" name="css_file" type="file" accept=".css" class="sr-only">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">CSS files only (.css)</p>
+                            <p id="cssFileName" class="text-xs text-blue-600 mt-2 font-medium"></p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Jika tidak diupload, file style.css kosong akan dibuat otomatis. CSS akan otomatis di-inject ke HTML.
+                    </p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">JavaScript File (Optional)</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-green-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <i class="fas fa-code text-gray-400 text-3xl"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="js_file" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500">
+                                    <span>Upload JS file</span>
+                                    <input id="js_file" name="js_file" type="file" accept=".js" class="sr-only">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">JavaScript files only (.js)</p>
+                            <p id="jsFileName" class="text-xs text-green-600 mt-2 font-medium"></p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Jika tidak diupload, file script.js kosong akan dibuat otomatis. JavaScript akan otomatis di-inject ke HTML.
+                    </p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Images (Optional)</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-purple-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <i class="fas fa-images text-gray-400 text-3xl"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="image_files" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500">
+                                    <span>Upload images</span>
+                                    <input id="image_files" name="image_files" type="file" accept="image/*" multiple class="sr-only">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">Image files (jpg, png, gif, webp, svg)</p>
+                            <p id="imageFilesName" class="text-xs text-purple-600 mt-2 font-medium"></p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Multiple images dapat diupload sekaligus. Images akan disimpan di folder images/
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-200 flex justify-end">
+            <button type="button" onclick="createTemplate()" class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors duration-200">
+                <i class="fas fa-save mr-2"></i>Create Template
+            </button>
+        </div>
+    </form>
+</div>
+{% else %}
+<!-- HTML Content Editor (Main Feature) -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-code mr-2 text-indigo-600"></i>
+            HTML Content Editor
+        </h3>
+        <div class="flex items-center space-x-2">
+            <button onclick="openVariableModal()" class="text-sm text-purple-600 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors duration-200">
+                <i class="fas fa-book mr-1"></i>Template Variables Guide
+            </button>
+            <button onclick="copyHTMLContent()" class="text-sm text-indigo-600 hover:text-indigo-900" title="Copy HTML">
+                <i class="fas fa-copy mr-1"></i>Copy
+            </button>
+        </div>
+    </div>
+    
+    {% if html_content %}
+    <form id="htmlEditorForm" method="POST">
+        {% csrf_token %}
+        <textarea 
+            id="htmlEditor" 
+            name="html_content" 
+            class="w-full font-mono text-sm border border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            rows="25"
+            style="min-height: 600px;"
+        >{{ html_content }}</textarea>
+    </form>
+    <p class="mt-2 text-xs text-gray-500">
+        <i class="fas fa-info-circle mr-1"></i>
+        Edit HTML content above. Click "Save HTML" to save changes.
+    </p>
+    {% else %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mr-3"></i>
+            <div>
+                <h4 class="text-sm font-medium text-yellow-800">HTML File Not Found</h4>
+                <p class="text-sm text-yellow-700 mt-1">The HTML file for this template could not be found or read.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if not is_create_mode %}
+<!-- CSS, JS, and Images Editors -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- CSS Editor -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-paint-brush mr-2 text-blue-600"></i>
+                CSS Editor
+            </h3>
+            <button onclick="saveCSSContent()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium">
+                <i class="fas fa-save mr-1"></i>Save CSS
+            </button>
+        </div>
+        <form id="cssEditorForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_css">
+            <textarea 
+                id="cssEditor" 
+                name="css_content" 
+                class="w-full font-mono text-sm border border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows="20"
+                style="min-height: 400px;"
+            >{% if css_content %}{{ css_content }}{% else %}/* CSS Template Styles */{% endif %}</textarea>
+        </form>
+        <p class="mt-2 text-xs text-gray-500">
+            <i class="fas fa-info-circle mr-1"></i>
+            CSS akan otomatis di-inject ke HTML saat render. File disimpan di: <code>{% if theme %}{{ theme.slug }}/style.css{% else %}template-slug/style.css{% endif %}</code>
+        </p>
+    </div>
+
+    <!-- JavaScript Editor -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-code mr-2 text-green-600"></i>
+                JavaScript Editor
+            </h3>
+            <button onclick="saveJSContent()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm font-medium">
+                <i class="fas fa-save mr-1"></i>Save JS
+            </button>
+        </div>
+        <form id="jsEditorForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_js">
+            <textarea 
+                id="jsEditor" 
+                name="js_content" 
+                class="w-full font-mono text-sm border border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                rows="20"
+                style="min-height: 400px;"
+            >{% if js_content %}{{ js_content }}{% else %}// JavaScript Template Code{% endif %}</textarea>
+        </form>
+        <p class="mt-2 text-xs text-gray-500">
+            <i class="fas fa-info-circle mr-1"></i>
+            JavaScript akan otomatis di-inject ke HTML saat render. File disimpan di: <code>{% if theme %}{{ theme.slug }}/script.js{% else %}template-slug/script.js{% endif %}</code>
+        </p>
+    </div>
+</div>
+
+<!-- Image Upload Section -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-images mr-2 text-purple-600"></i>
+            Template Images
+        </h3>
+        <label for="imageUpload" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
+            <i class="fas fa-upload mr-1"></i>Upload Image
+        </label>
+        <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="uploadImage(this)">
+    </div>
+    
+    <form id="imageUploadForm" method="POST" enctype="multipart/form-data" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="upload_image">
+        <input type="file" name="image_file" id="imageFileInput" accept="image/*">
+    </form>
+    
+    {% if images_list %}
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
+        {% for image in images_list %}
+        <div class="relative group">
+            <img src="{{ image.url }}" alt="{{ image.name }}" class="w-full h-32 object-cover rounded-lg border border-gray-200">
+            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <button onclick="copyImageURL('{{ image.url }}')" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs mr-2">
+                    <i class="fas fa-copy mr-1"></i>Copy URL
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 truncate" title="{{ image.name }}">{{ image.name }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+        <i class="fas fa-images text-4xl text-gray-400 mb-2"></i>
+        <p class="text-gray-600">No images uploaded yet. Click "Upload Image" to add images.</p>
+        <p class="text-xs text-gray-500 mt-2">Images will be saved in: <code>{% if theme %}{{ theme.slug }}/images/{% else %}template-slug/images/{% endif %}</code></p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if not is_create_mode %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Template Info -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-info-circle mr-2 text-indigo-600"></i>
+            Template Information
+        </h3>
+        
+        <dl class="space-y-4">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Name</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ theme.name }}</dd>
+            </div>
+            
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Slug</dt>
+                <dd class="mt-1 text-sm text-gray-900 font-mono">{{ theme.slug }}</dd>
+            </div>
+            
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Category</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ theme.category.name }}</dd>
+            </div>
+            
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Status</dt>
+                <dd class="mt-1">
+                    {% if theme.is_active %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                    {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactive</span>
+                    {% endif %}
+                </dd>
+            </div>
+            
+            {% if theme.html_file %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">HTML File</dt>
+                <dd class="mt-1 text-sm text-gray-900 font-mono">{{ theme.html_file }}</dd>
+            </div>
+            {% endif %}
+            
+            {% if file_path %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">File Path</dt>
+                <dd class="mt-1 text-sm text-gray-600 font-mono break-all text-xs">{{ file_path }}</dd>
+            </div>
+            {% endif %}
+            
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Created</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ theme.created_at|date:"d M Y H:i" }}</dd>
+            </div>
+            
+            {% if theme.created_by %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Created By</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ theme.created_by.get_full_name|default:theme.created_by.username }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+    
+    <!-- Endpoints -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-link mr-2 text-blue-600"></i>
+            Available Endpoints
+        </h3>
+        
+        <div class="space-y-4">
+            {% for key, url in endpoints.items %}
+            <div class="border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">
+                        {% if key == 'public_preview' %}Public Preview
+                        {% elif key == 'admin_preview' %}Admin Preview
+                        {% elif key == 'admin_edit' %}Admin Edit
+                        {% else %}{{ key }}
+                        {% endif %}
+                    </span>
+                    <button onclick="copyToClipboard('{{ url }}')" class="text-indigo-600 hover:text-indigo-900 text-sm" title="Copy URL">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <a href="{{ url }}" target="_blank" class="text-sm text-indigo-600 hover:text-indigo-900 font-mono break-all block">
+                    {{ url }}
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not is_create_mode %}
+<!-- Template Variables (Quick Reference) -->
+<div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-code mr-2 text-purple-600"></i>
+            Template Variables (Click for Details)
+        </h3>
+        <button onclick="openVariableModal()" class="text-sm text-purple-600 hover:text-purple-900">
+            <i class="fas fa-book-open mr-1"></i>View Full Guide
+        </button>
+    </div>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for var_name, var_info in template_variables.items %}
+        <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50 transition-colors duration-200 cursor-pointer" onclick="openVariableDetail('{{ var_name }}')">
+            <div class="flex items-center justify-between mb-2">
+                <code class="text-sm font-mono text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{{ var_info.name }}</code>
+                <i class="fas fa-info-circle text-purple-500"></i>
+            </div>
+            <p class="text-xs text-gray-600 line-clamp-2">{{ var_info.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Template Variables Modal -->
+<div id="variableModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-book mr-2 text-purple-600"></i>
+                Template Variables Guide
+            </h3>
+            <button onclick="closeVariableModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="space-y-6">
+                {% for var_name, var_info in template_variables.items %}
+                <div id="variable-{{ var_name }}" class="variable-section border border-gray-200 rounded-lg p-6 hover:border-purple-300 transition-colors duration-200">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                                <code class="text-base font-mono text-indigo-600 bg-indigo-50 px-3 py-1 rounded mr-2">{{ var_info.name }}</code>
+                                <span class="text-sm text-gray-500 font-normal">({{ var_info.type }})</span>
+                            </h4>
+                            <p class="text-sm text-gray-600 mt-2">{{ var_info.description }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h5 class="text-sm font-medium text-gray-700 mb-2">Available Fields:</h5>
+                        <ul class="space-y-1">
+                            {% for field in var_info.fields %}
+                            <li class="text-sm text-gray-600 flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
+                                <code class="font-mono text-indigo-600">{{ field }}</code>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h5 class="text-sm font-medium text-blue-800 mb-2">Example Usage:</h5>
+                        <code class="text-sm font-mono text-blue-900 block bg-white p-3 rounded border border-blue-200">{{ var_info.example }}</code>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="border-t border-gray-200 p-4 bg-gray-50">
+            <div class="flex justify-end">
+                <button onclick="closeVariableModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+// Create template function
+async function createTemplate() {
+    const form = document.getElementById('createTemplateForm');
+    if (!form) {
+        showAlert('error', 'Create form not found');
+        return;
+    }
+    
+    const name = document.getElementById('template_name')?.value.trim();
+    const category = document.getElementById('template_category')?.value;
+    const htmlFile = document.getElementById('html_file')?.files[0];
+    const cssFile = document.getElementById('css_file')?.files[0];
+    const jsFile = document.getElementById('js_file')?.files[0];
+    const imageFiles = document.getElementById('image_files')?.files;
+    
+    if (!name) {
+        showAlert('error', 'Template name is required');
+        return;
+    }
+    
+    if (!category) {
+        showAlert('error', 'Category is required');
+        return;
+    }
+    
+    if (!htmlFile) {
+        showAlert('error', 'HTML file is required');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    formData.append('html_file', htmlFile);
+    
+    // Add CSS file if provided
+    if (cssFile) {
+        formData.append('css_file', cssFile);
+    }
+    
+    // Add JS file if provided
+    if (jsFile) {
+        formData.append('js_file', jsFile);
+    }
+    
+    // Add image files if provided
+    if (imageFiles && imageFiles.length > 0) {
+        for (let i = 0; i < imageFiles.length; i++) {
+            formData.append('image_files', imageFiles[i]);
+        }
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', data.message || 'Template created successfully');
+            // Redirect to edit page
+            if (data.redirect_url) {
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1000);
+            }
+        } else {
+            showAlert('error', data.message || 'Failed to create template');
+        }
+    } catch (error) {
+        console.error('Create error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// File name display
+document.addEventListener('DOMContentLoaded', function() {
+    // HTML file
+    const htmlFileInput = document.getElementById('html_file');
+    if (htmlFileInput) {
+        htmlFileInput.addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : '';
+            const fileNameDisplay = document.getElementById('htmlFileName');
+            if (fileNameDisplay) {
+                fileNameDisplay.textContent = fileName ? 'Selected: ' + fileName : '';
+            }
+        });
+    }
+    
+    // CSS file
+    const cssFileInput = document.getElementById('css_file');
+    if (cssFileInput) {
+        cssFileInput.addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : '';
+            const fileNameDisplay = document.getElementById('cssFileName');
+            if (fileNameDisplay) {
+                fileNameDisplay.textContent = fileName ? 'Selected: ' + fileName : '';
+            }
+        });
+    }
+    
+    // JS file
+    const jsFileInput = document.getElementById('js_file');
+    if (jsFileInput) {
+        jsFileInput.addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : '';
+            const fileNameDisplay = document.getElementById('jsFileName');
+            if (fileNameDisplay) {
+                fileNameDisplay.textContent = fileName ? 'Selected: ' + fileName : '';
+            }
+        });
+    }
+    
+    // Images files
+    const imageFilesInput = document.getElementById('image_files');
+    if (imageFilesInput) {
+        imageFilesInput.addEventListener('change', function(e) {
+            const fileCount = e.target.files.length;
+            const fileNameDisplay = document.getElementById('imageFilesName');
+            if (fileNameDisplay) {
+                if (fileCount > 0) {
+                    const fileNames = Array.from(e.target.files).map(f => f.name).join(', ');
+                    fileNameDisplay.textContent = fileCount + ' file(s) selected: ' + (fileNames.length > 50 ? fileNames.substring(0, 50) + '...' : fileNames);
+                } else {
+                    fileNameDisplay.textContent = '';
+                }
+            }
+        });
+    }
+});
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        showAlert('success', 'Copied to clipboard!');
+    }, function(err) {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showAlert('success', 'Copied to clipboard!');
+        } catch (err) {
+            showAlert('error', 'Failed to copy');
+        }
+        document.body.removeChild(textarea);
+    });
+}
+
+function copyHTMLContent() {
+    const htmlContent = document.getElementById('htmlEditor')?.value || '';
+    if (htmlContent) {
+        copyToClipboard(htmlContent);
+    } else {
+        showAlert('warning', 'No HTML content to copy');
+    }
+}
+
+function openVariableModal() {
+    document.getElementById('variableModal').classList.remove('hidden');
+}
+
+function closeVariableModal() {
+    document.getElementById('variableModal').classList.add('hidden');
+}
+
+function openVariableDetail(varName) {
+    openVariableModal();
+    // Scroll to specific variable section
+    setTimeout(() => {
+        const element = document.getElementById('variable-' + varName);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            element.classList.add('ring-2', 'ring-purple-500');
+            setTimeout(() => {
+                element.classList.remove('ring-2', 'ring-purple-500');
+            }, 2000);
+        }
+    }, 100);
+}
+
+// Save CSS content
+async function saveCSSContent() {
+    const form = document.getElementById('cssEditorForm');
+    if (!form) {
+        showAlert('error', 'CSS editor form not found');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', data.message || 'CSS content saved successfully');
+        } else {
+            showAlert('error', data.message || 'Failed to save CSS content');
+        }
+    } catch (error) {
+        console.error('Save CSS error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Save JS content
+async function saveJSContent() {
+    const form = document.getElementById('jsEditorForm');
+    if (!form) {
+        showAlert('error', 'JavaScript editor form not found');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', data.message || 'JavaScript content saved successfully');
+        } else {
+            showAlert('error', data.message || 'Failed to save JavaScript content');
+        }
+    } catch (error) {
+        console.error('Save JS error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Upload image
+function uploadImage(input) {
+    if (!input.files || !input.files[0]) return;
+    
+    const form = document.getElementById('imageUploadForm');
+    const formData = new FormData(form);
+    formData.append('image_file', input.files[0]);
+    
+    showLoading(true);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showAlert('success', data.message || 'Image uploaded successfully');
+            // Reload page to show new image
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert('error', data.message || 'Failed to upload image');
+        }
+    })
+    .catch(error => {
+        console.error('Upload image error:', error);
+        showAlert('error', 'Network error occurred');
+    })
+    .finally(() => {
+        showLoading(false);
+        // Reset input
+        input.value = '';
+    });
+}
+
+// Copy image URL
+function copyImageURL(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        showAlert('success', 'Image URL copied to clipboard!');
+    }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showAlert('success', 'Image URL copied to clipboard!');
+    });
+}
+
+// Save HTML content
+async function saveHTMLContent() {
+    const form = document.getElementById('htmlEditorForm');
+    if (!form) {
+        showAlert('error', 'Editor form not found');
+        return;
+    }
+    
+    const htmlContent = document.getElementById('htmlEditor')?.value || '';
+    if (!htmlContent.trim()) {
+        showAlert('warning', 'HTML content is empty');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    formData.append('html_content', htmlContent);
+    formData.append('action', 'save_html');
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', data.message || 'HTML content saved successfully');
+        } else {
+            showAlert('error', data.message || 'Failed to save HTML content');
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('variableModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeVariableModal();
+    }
+});
+
+// Escape key to close modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeVariableModal();
+    }
+});
+{% endblock %}

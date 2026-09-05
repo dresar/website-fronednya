@@ -1,0 +1,479 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Users - Invywed Admin{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block page_subtitle %}Manage user accounts and subscriptions{% endblock %}
+
+{% block content %}
+<!-- Export Button -->
+<div class="mb-4 md:mb-6 flex justify-end">
+    <button onclick="exportData('user')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+        <i class="fas fa-download mr-2"></i>
+        Export CSV
+    </button>
+</div>
+<!-- User Statistics -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-white text-lg"></i>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-2xl font-bold text-gray-900">{{ user_stats.total_users|default:0 }}</p>
+                <p class="text-sm text-gray-500">Total Users</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-check text-white text-lg"></i>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-2xl font-bold text-gray-900">{{ user_stats.active_users|default:0 }}</p>
+                <p class="text-sm text-gray-500">Active Users</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-crown text-white text-lg"></i>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-2xl font-bold text-gray-900">{{ user_stats.premium_users|default:0 }}</p>
+                <p class="text-sm text-gray-500">Premium Users</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-plus text-white text-lg"></i>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-2xl font-bold text-gray-900">{{ user_stats.new_this_month|default:0 }}</p>
+                <p class="text-sm text-gray-500">New This Month</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <form method="GET" class="space-y-4 lg:space-y-0 lg:flex lg:items-end lg:space-x-4">
+        <!-- Search -->
+        <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
+            <div class="relative">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ current_search }}"
+                    placeholder="Search by username, email, name..."
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Subscription Filter -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Subscription</label>
+            <select name="subscription" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">All Subscriptions</option>
+                {% for value, display in subscription_choices %}
+                    <option value="{{ value }}" {% if current_subscription == value %}selected{% endif %}>
+                        {{ display }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Status Filter -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">All Status</option>
+                <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        
+        <!-- Sort -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+            <select name="sort" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                <option value="created_at" {% if current_sort == 'created_at' %}selected{% endif %}>Oldest First</option>
+                <option value="user__username" {% if current_sort == 'user__username' %}selected{% endif %}>Username A-Z</option>
+                <option value="-user__username" {% if current_sort == '-user__username' %}selected{% endif %}>Username Z-A</option>
+                <option value="subscription_type" {% if current_sort == 'subscription_type' %}selected{% endif %}>Subscription Type</option>
+            </select>
+        </div>
+        
+        <div class="flex space-x-2">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                <i class="fas fa-filter mr-1"></i>
+                Filter
+            </button>
+            <a href="{% url 'admin_panel:user_list' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                <i class="fas fa-times mr-1"></i>
+                Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Bulk Actions -->
+<div id="bulkActions" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+        <div class="flex items-center space-x-3">
+            <span class="text-sm font-medium text-gray-700">
+                <span id="selectedCount">0</span> user(s) selected
+            </span>
+        </div>
+        <div class="flex space-x-2">
+            <button onclick="bulkUserAction('activate')" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200">
+                <i class="fas fa-user-check mr-1"></i>
+                Activate
+            </button>
+            <button onclick="bulkUserAction('deactivate')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200">
+                <i class="fas fa-user-times mr-1"></i>
+                Deactivate
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+    <!-- Table Header -->
+    <div class="p-4 border-b border-gray-200 bg-gray-50">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <label for="selectAll" class="text-sm font-medium text-gray-700">Select All</label>
+            </div>
+            <div class="text-sm text-gray-500">
+                {% if is_paginated %}
+                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} users
+                {% else %}
+                    {{ items.count }} users
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                    <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for client in items %}
+                    <tr class="hover:bg-gray-50 {% if not client.user.is_active %}opacity-60 bg-red-50{% endif %}" data-user-id="{{ client.id }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox" class="user-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" value="{{ client.id }}">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        {% if client.profile_photo %}
+                                            <img class="h-10 w-10 rounded-full object-cover" src="{{ client.profile_photo.url }}" alt="{{ client.user.username }}">
+                                        {% else %}
+                                            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                <i class="fas fa-user text-gray-600"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ client.user.get_full_name|default:client.user.username }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">@{{ client.user.username }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ client.user.email|default:'-' }}</div>
+                            <div class="text-sm text-gray-500">{{ client.phone_number|default:'-' }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if client.subscription_type == 'free' %}bg-gray-100 text-gray-800
+                                {% elif client.subscription_type == 'premium' %}bg-blue-100 text-blue-800
+                                {% elif client.subscription_type == 'gold' %}bg-yellow-100 text-yellow-800
+                                {% elif client.subscription_type == 'platinum' %}bg-purple-100 text-purple-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if client.subscription_type == 'premium' %}<i class="fas fa-star mr-1"></i>{% endif %}
+                                {% if client.subscription_type == 'gold' %}<i class="fas fa-crown mr-1"></i>{% endif %}
+                                {% if client.subscription_type == 'platinum' %}<i class="fas fa-gem mr-1"></i>{% endif %}
+                                {{ client.get_subscription_type_display }}
+                            </span>
+                            {% if client.subscription_expires %}
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Expires: {{ client.subscription_expires|date:"d M Y" }}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" 
+                                       class="sr-only status-toggle" 
+                                       data-user-id="{{ client.id }}"
+                                       {% if client.user.is_active %}checked{% endif %}
+                                       onchange="toggleUserStatus({{ client.id }}, this.checked)">
+                                <div class="relative">
+                                    <div class="block {% if client.user.is_active %}bg-green-600{% else %}bg-gray-600{% endif %} w-10 h-6 rounded-full transition-colors duration-200"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 {% if client.user.is_active %}transform translate-x-4{% endif %}"></div>
+                                </div>
+                            </label>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ client.created_at|date:"d M Y" }}
+                            <div class="text-xs text-gray-400">
+                                {{ client.created_at|timesince }} ago
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <a href="{% url 'admin_panel:user_detail' client.pk %}" 
+                                   class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200 p-2 hover:bg-indigo-50 rounded"
+                                   title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button onclick="toggleUserStatus({{ client.id }}, !{{ client.user.is_active|yesno:'true,false' }})" 
+                                        class="{% if client.user.is_active %}text-red-600 hover:text-red-900 hover:bg-red-50{% else %}text-green-600 hover:text-green-900 hover:bg-green-50{% endif %} transition-colors duration-200 p-2 rounded"
+                                        title="{% if client.user.is_active %}Deactivate User{% else %}Activate User{% endif %}">
+                                    <i class="fas fa-{% if client.user.is_active %}user-slash{% else %}user-check{% endif %}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="text-center">
+                                <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-xl font-medium text-gray-900 mb-2">No Users Found</h3>
+                                <p class="text-gray-500">No users match your current filters</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow-sm border border-gray-200">
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+            <p class="text-sm text-gray-700">
+                Showing <span class="font-medium">{{ page_obj.start_index }}</span>
+                to <span class="font-medium">{{ page_obj.end_index }}</span>
+                of <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                results
+            </p>
+        </div>
+        <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                {% if page_obj.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                {% endif %}
+
+                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+// Bulk Selection Logic
+const selectAllCheckbox = document.getElementById('selectAll');
+const userCheckboxes = document.querySelectorAll('.user-checkbox');
+const bulkActions = document.getElementById('bulkActions');
+const selectedCount = document.getElementById('selectedCount');
+
+function updateBulkActions() {
+    const checked = document.querySelectorAll('.user-checkbox:checked');
+    const count = checked.length;
+    
+    selectedCount.textContent = count;
+    
+    if (count > 0) {
+        bulkActions.classList.remove('hidden');
+    } else {
+        bulkActions.classList.add('hidden');
+    }
+    
+    // Update select all state
+    selectAllCheckbox.checked = checked.length === userCheckboxes.length;
+    selectAllCheckbox.indeterminate = checked.length > 0 && checked.length < userCheckboxes.length;
+}
+
+selectAllCheckbox?.addEventListener('change', function() {
+    userCheckboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+    updateBulkActions();
+});
+
+userCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActions);
+});
+
+// User Actions
+async function toggleUserStatus(userId, newStatus) {
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`/admin/users/${userId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', data.message);
+            
+            // Update row appearance
+            const row = document.querySelector(`[data-user-id="${userId}"]`);
+            if (row) {
+                if (data.is_active) {
+                    row.classList.remove('opacity-60', 'bg-red-50');
+                } else {
+                    row.classList.add('opacity-60', 'bg-red-50');
+                }
+                
+                // Update toggle
+                const toggle = row.querySelector('.status-toggle');
+                const dot = row.querySelector('.dot');
+                const bg = row.querySelector('.block');
+                
+                toggle.checked = data.is_active;
+                
+                if (data.is_active) {
+                    dot.classList.add('transform', 'translate-x-4');
+                    bg.classList.remove('bg-gray-600');
+                    bg.classList.add('bg-green-600');
+                } else {
+                    dot.classList.remove('transform', 'translate-x-4');
+                    bg.classList.remove('bg-green-600');
+                    bg.classList.add('bg-gray-600');
+                }
+            }
+        } else {
+            showAlert('error', data.message);
+        }
+        
+    } catch (error) {
+        console.error('Toggle user error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function bulkUserAction(action) {
+    const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+    const userIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (userIds.length === 0) {
+        showAlert('warning', 'No users selected');
+        return;
+    }
+    
+    let confirmMessage = '';
+    switch(action) {
+        case 'activate':
+            confirmMessage = `Activate ${userIds.length} selected user(s)?`;
+            break;
+        case 'deactivate':
+            confirmMessage = `Deactivate ${userIds.length} selected user(s)?`;
+            break;
+        default:
+            showAlert('error', 'Invalid action');
+            return;
+    }
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch('{% url "admin_panel:bulk_action" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                model: 'user',
+                action: action,
+                item_ids: userIds
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', data.message);
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showAlert('error', data.message);
+        }
+        
+    } catch (error) {
+        console.error('Bulk user action error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+{% endblock %}

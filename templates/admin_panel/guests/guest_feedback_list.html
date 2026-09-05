@@ -1,0 +1,143 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Guest Feedback - Invywed Admin{% endblock %}
+{% block page_title %}Guest Feedback{% endblock %}
+{% block page_subtitle %}View and manage guest feedback{% endblock %}
+
+{% block content %}
+<!-- Statistics -->
+<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Average Rating</h3>
+            <div class="flex items-center space-x-2">
+                <span class="text-3xl font-bold text-indigo-600">{{ avg_rating }}</span>
+                <div class="flex items-center">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= avg_rating|floatformat:0|add:"0" %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                        {% else %}
+                            <i class="far fa-star text-gray-300"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-gray-500">Total Feedback</p>
+            <p class="text-2xl font-bold text-gray-900">{{ page_obj.paginator.count|default:0 }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="md:col-span-2">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search by guest name or feedback..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+            <select name="rating" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">All Ratings</option>
+                {% for value, label in rating_choices %}
+                    <option value="{{ value }}" {% if rating_filter == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                <i class="fas fa-search mr-2"></i>Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Feedback List -->
+<div class="space-y-4">
+    {% for feedback in feedbacks %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ feedback.guest.full_name }}</h3>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        {{ feedback.get_category_display }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500">{{ feedback.guest.client.user.username }} • {{ feedback.submitted_at|date:"d M Y, H:i" }}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="flex items-center">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= feedback.rating %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                        {% else %}
+                            <i class="far fa-star text-gray-300"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% if feedback.is_approved %}
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Approved</span>
+                {% else %}
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Pending</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <p class="text-gray-700 whitespace-pre-wrap">{{ feedback.feedback_text }}</p>
+        </div>
+        
+        {% if feedback.suggestions %}
+            <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                <p class="text-xs font-medium text-blue-900 mb-1">Suggestions:</p>
+                <p class="text-sm text-blue-800">{{ feedback.suggestions }}</p>
+            </div>
+        {% endif %}
+        
+        <div class="flex items-center justify-between text-sm text-gray-500">
+            <div class="flex items-center space-x-4">
+                <span>
+                    <i class="fas fa-thumbs-up mr-1"></i>
+                    {% if feedback.would_recommend %}Would Recommend{% else %}Would Not Recommend{% endif %}
+                </span>
+                {% if feedback.is_anonymous %}
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                        <i class="fas fa-user-secret mr-1"></i>Anonymous
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+        <i class="fas fa-comment-dots text-4xl mb-4 text-gray-300"></i>
+        <p class="text-lg font-medium text-gray-500">No feedback found</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} feedback
+        </div>
+        <div class="flex space-x-2">
+            {% if has_previous %}
+                <a href="?page={{ previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Previous
+                </a>
+            {% endif %}
+            {% if has_next %}
+                <a href="?page={{ next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Next
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

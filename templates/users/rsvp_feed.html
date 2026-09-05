@@ -1,0 +1,166 @@
+{% extends 'users/base_user.html' %}
+{% load static %}
+
+{% block title %}Ucapan & Doa - Invywed{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-white border-b border-gray-200 px-4 py-4 lg:px-6 lg:py-5 sticky top-0 z-10 shadow-sm">
+    <h1 class="text-lg md:text-xl font-bold text-gray-900">Ucapan & Doa</h1>
+    <p class="text-xs md:text-sm text-gray-500 mt-1">Ucapan dari tamu undangan Anda</p>
+</div>
+
+<!-- Filter Tabs -->
+<div class="bg-white border-b border-gray-200 px-4 lg:px-6">
+    <div class="flex space-x-1 overflow-x-auto">
+        <button onclick="filterFeed('all')" class="filter-tab active flex-shrink-0 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-indigo-600">
+            Semua
+        </button>
+        <button onclick="filterFeed('attending')" class="filter-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent">
+            Hadir
+        </button>
+        <button onclick="filterFeed('wishes')" class="filter-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent">
+            Ucapan
+        </button>
+    </div>
+</div>
+
+<!-- Feed Content -->
+<div class="container-responsive py-4 lg:py-6">
+    {% if rsvp_responses or guest_wishes %}
+        <!-- RSVP Responses -->
+        {% for rsvp in rsvp_responses %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 feed-item" data-type="rsvp">
+            <div class="flex items-start space-x-3">
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-user text-indigo-600"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">{{ rsvp.guest.full_name }}</h4>
+                            <p class="text-xs text-gray-500">{{ rsvp.created_at|date:"d M Y, H:i" }}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full
+                            {% if rsvp.attendance_status == 'attending' %}bg-green-100 text-green-800
+                            {% elif rsvp.attendance_status == 'not_attending' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {% if rsvp.attendance_status == 'attending' %}
+                                <i class="fas fa-check-circle mr-1"></i>Hadir
+                            {% elif rsvp.attendance_status == 'not_attending' %}
+                                <i class="fas fa-times-circle mr-1"></i>Tidak Hadir
+                            {% else %}
+                                Belum Konfirmasi
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    {% if rsvp.number_of_guests %}
+                        <p class="text-sm text-gray-700 mb-2">
+                            <i class="fas fa-users mr-1 text-gray-400"></i>
+                            Jumlah tamu: {{ rsvp.number_of_guests }} orang
+                        </p>
+                    {% endif %}
+                    
+                    {% if rsvp.special_requests %}
+                        <div class="bg-gray-50 rounded-lg p-3 mt-2">
+                            <p class="text-sm text-gray-700">{{ rsvp.special_requests }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Guest Wishes -->
+        {% for wish in guest_wishes %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 feed-item" data-type="wish">
+            <div class="flex items-start space-x-3">
+                <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-heart text-pink-600"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">{{ wish.guest.full_name }}</h4>
+                            <p class="text-xs text-gray-500">{{ wish.created_at|date:"d M Y, H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-4 mt-3">
+                        <p class="text-gray-800 leading-relaxed">{{ wish.wishes }}</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 mt-3">
+                        <button onclick="likeWish('{{ wish.id }}')" class="flex items-center space-x-1 text-gray-500 hover:text-pink-600 transition-colors">
+                            <i class="fas fa-heart"></i>
+                            <span class="text-xs">{{ wish.like_count|default:0 }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-heart text-3xl text-gray-300"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Belum Ada Ucapan</h3>
+            <p class="text-sm text-gray-500 mb-4">Ucapan dari tamu akan muncul di sini</p>
+            <a href="{% url 'users:guest_manager' %}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i class="fas fa-user-plus mr-2"></i>
+                Undang Tamu
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterFeed(type) {
+        // Remove active class from all tabs
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.classList.remove('active', 'border-indigo-600');
+            tab.classList.add('border-transparent');
+        });
+        
+        // Add active class to clicked tab
+        event.target.classList.add('active', 'border-indigo-600');
+        event.target.classList.remove('border-transparent');
+        
+        // Filter items
+        const items = document.querySelectorAll('.feed-item');
+        items.forEach(item => {
+            if (type === 'all') {
+                item.style.display = 'block';
+            } else if (type === 'attending') {
+                item.style.display = item.dataset.type === 'rsvp' && item.querySelector('.bg-green-100') ? 'block' : 'none';
+            } else if (type === 'wishes') {
+                item.style.display = item.dataset.type === 'wish' ? 'block' : 'none';
+            }
+        });
+    }
+    
+    function likeWish(wishId) {
+        // AJAX like functionality
+        // For now, just toggle visual state
+        const button = event.target.closest('button');
+        const icon = button.querySelector('i');
+        const countSpan = button.querySelector('span');
+        
+        if (icon.classList.contains('far')) {
+            icon.classList.remove('far');
+            icon.classList.add('fas', 'text-pink-600');
+            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+        } else {
+            icon.classList.remove('fas', 'text-pink-600');
+            icon.classList.add('far');
+            countSpan.textContent = parseInt(countSpan.textContent) - 1;
+        }
+    }
+</script>
+{% endblock %}
+

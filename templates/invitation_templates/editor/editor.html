@@ -1,0 +1,916 @@
+{% extends 'invitation_templates/editor/base.html' %}
+{% load static %}
+
+{% block title %}Editor: {{ theme.name }}{% endblock %}
+{% block page_title %}{{ theme.name }}{% endblock %}
+{% block page_subtitle %}Edit HTML, CSS, JS files{% endblock %}
+
+{% block content %}
+<!-- Action Buttons -->
+<div class="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center space-x-2 sm:space-x-3">
+        <button onclick="saveAllFiles()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+            <i class="fas fa-save mr-2"></i><span class="hidden sm:inline">Save All</span><span class="sm:hidden">Save</span>
+        </button>
+        <button onclick="validateTemplate()" class="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+            <i class="fas fa-check-circle mr-2"></i><span class="hidden sm:inline">Validate</span><span class="sm:hidden">Check</span>
+        </button>
+        <button onclick="openVariablesModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+            <i class="fas fa-code mr-2"></i><span class="hidden sm:inline">Variables</span>
+        </button>
+        <button onclick="openPromptModal()" class="bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+            <i class="fas fa-robot mr-2"></i><span class="hidden sm:inline">Prompt</span>
+        </button>
+        <a href="{% url 'invitation_templates:template_editor_docs' theme.slug %}" class="bg-gray-800 hover:bg-black text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+            <i class="fas fa-book mr-2"></i><span class="hidden sm:inline">Tutorial</span><span class="sm:hidden">Docs</span>
+        </a>
+        <a href="{% url 'public:theme_preview' theme.slug %}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+            <i class="fas fa-eye mr-2"></i><span class="hidden sm:inline">Preview</span><span class="sm:hidden">View</span>
+        </a>
+    </div>
+    <a href="{% url 'invitation_templates:template_editor_list' %}" class="text-gray-600 hover:text-gray-900 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium">
+        <i class="fas fa-arrow-left mr-2"></i><span class="hidden sm:inline">Back to List</span><span class="sm:hidden">Back</span>
+    </a>
+</div>
+
+<!-- EDIT MODE: Code Editor -->
+<!-- File Tabs -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 sm:mb-6">
+    <div class="border-b border-gray-200 overflow-x-auto">
+        <nav class="flex space-x-1 sm:space-x-4 px-4" id="fileTabs">
+            <button class="tab-btn active px-3 sm:px-4 py-3 sm:py-4 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 whitespace-nowrap" data-file="html">
+                <i class="fas fa-code mr-2"></i>HTML
+            </button>
+            <button class="tab-btn px-3 sm:px-4 py-3 sm:py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-file="images">
+                <i class="fas fa-images mr-2"></i>Images
+            </button>
+        </nav>
+    </div>
+    
+    <!-- HTML Editor -->
+    <div id="tab-html" class="tab-content p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900">HTML Editor</h3>
+                <span class="text-xs sm:text-sm text-gray-500">{{ theme.slug }}/index.html</span>
+            </div>
+        </div>
+        <div id="htmlEditorContainer" class="border border-gray-300 rounded-lg" style="min-height: 500px;"></div>
+    </div>
+    
+    <!-- Images Tab -->
+    <div id="tab-images" class="tab-content p-4 sm:p-6 hidden">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900">Image Manager</h3>
+            <label for="imageUpload" class="bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                <i class="fas fa-upload mr-2"></i><span class="hidden sm:inline">Upload</span>
+                <input type="file" id="imageUpload" accept="image/*" multiple class="hidden" onchange="uploadImages(this)">
+            </label>
+        </div>
+        
+        <!-- Music Section -->
+        <div class="mb-6 pb-6 border-b border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900">Music File (Default)</h3>
+                <label for="musicUpload" class="bg-pink-600 hover:bg-pink-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                    <i class="fas fa-music mr-2"></i><span class="hidden sm:inline">Upload Music</span>
+                    <input type="file" id="musicUpload" accept="audio/*,.mp3,.wav,.ogg,.m4a" class="hidden" onchange="uploadMusic(this)">
+                </label>
+            </div>
+            <div id="musicInfo" class="text-sm text-gray-600">
+                {% if music_info %}
+                <p class="text-green-600"><i class="fas fa-check-circle mr-2"></i>Music: {{ music_info.name }}</p>
+                <p class="text-xs text-gray-500 mt-1">Path: {{ music_info.url }}</p>
+                {% else %}
+                <p>Upload file music default untuk template ini (.mp3, .wav, .ogg, .m4a)</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div id="imagesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            {% for image in images_list %}
+            <div class="relative group bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                <img src="{{ image.url }}" alt="{{ image.name }}" class="w-full h-24 sm:h-32 object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div class="flex flex-col space-y-2">
+                        <button onclick="copyImageCode('{{ image.url }}', '{{ image.name }}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium flex items-center">
+                            <i class="fas fa-copy mr-1"></i>Copy Code
+                        </button>
+                        <button onclick="deleteImage('{{ image.name }}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium flex items-center">
+                            <i class="fas fa-trash mr-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+                <p class="p-2 text-xs text-gray-700 truncate" title="{{ image.name }}">{{ image.name }}</p>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-8 sm:py-12 text-gray-500">
+                <i class="fas fa-images text-4xl sm:text-5xl mb-3 text-gray-300"></i>
+                <p class="text-sm sm:text-base">No images uploaded yet</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Validation Results Modal -->
+<div id="validationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900">Template Validation</h3>
+            <button onclick="closeValidationModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="validationContent" class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Prompt Modal -->
+<div id="promptModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900">AI Prompt Generator</h3>
+            <button onclick="closePromptModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <p class="text-sm text-gray-600 mb-4">Copy prompt ini untuk meminta AI mengubah HTML statis menjadi template Django:</p>
+            <textarea id="promptTextarea" class="w-full border border-gray-300 rounded-lg p-3 text-[11px] sm:text-xs font-mono text-gray-800 bg-gray-50" rows="25" readonly onclick="this.select()"></textarea>
+            <div class="mt-4 flex items-center justify-between">
+                <p class="text-xs text-gray-500">Tip: klik textarea lalu tekan <kbd>Ctrl+A</kbd> &amp; <kbd>Ctrl+C</kbd> untuk menyalin</p>
+                <button onclick="copyPrompt()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    <i class="fas fa-copy mr-2"></i>Copy Prompt
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Variables Modal -->
+<div id="variablesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900">Django Template Variables</h3>
+            <button onclick="closeVariablesModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for var_name, var_info in template_variables.items %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                    <div class="flex items-center justify-between mb-2">
+                        <code class="text-sm font-mono bg-purple-50 text-purple-600 px-2 py-1 rounded">{{ var_info.name }}</code>
+                        <span class="text-xs text-gray-500">{{ var_info.type }}</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-gray-600 mb-3">{{ var_info.description }}</p>
+                    <div class="bg-gray-50 rounded p-2 mb-2">
+                        <p class="text-xs font-semibold text-gray-700 mb-1">Fields:</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            {% for field in var_info.fields %}
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-1 mt-0.5"></i>
+                                <code class="text-xs">{{ field }}</code>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="bg-blue-50 rounded p-2">
+                        <p class="text-xs font-semibold text-blue-800 mb-1">Example:</p>
+                        <code class="text-xs text-blue-900 block break-all">{{ var_info.example }}</code>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Hidden JSON data containers (rendered as <script type="application/json">) -->
+{{ css_files_list|json_script:"css-files-data" }}
+{{ js_files_list|json_script:"js-files-data" }}
+{{ images_list|json_script:"images-files-data" }}
+{{ html_content|json_script:"html-content-data" }}
+
+<script>
+// Theme slug (used for generating paths without variables)
+const themeSlug = '{{ theme.slug }}';
+
+// Prompt modal functions
+function openPromptModal() {
+    generatePrompt();
+    document.getElementById('promptModal').classList.remove('hidden');
+}
+
+function closePromptModal() {
+    document.getElementById('promptModal').classList.add('hidden');
+}
+
+function copyPrompt() {
+    const textarea = document.getElementById('promptTextarea');
+    textarea.select();
+    document.execCommand('copy');
+    showAlert('success', 'Prompt copied to clipboard!');
+}
+
+function generatePrompt() {
+    // Get CSS, JS, and Images files info from json_script
+    let cssFiles = [];
+    let jsFiles = [];
+    let imagesFiles = [];
+    
+    try {
+        const cssDataElement = document.getElementById('css-files-data');
+        const jsDataElement = document.getElementById('js-files-data');
+        const imagesDataElement = document.getElementById('images-files-data');
+        
+        if (cssDataElement) {
+            cssFiles = JSON.parse(cssDataElement.textContent) || [];
+        }
+        
+        if (jsDataElement) {
+            jsFiles = JSON.parse(jsDataElement.textContent) || [];
+        }
+        
+        if (imagesDataElement) {
+            imagesFiles = JSON.parse(imagesDataElement.textContent) || [];
+        }
+    } catch (e) {
+        console.error('Error parsing files data for prompt:', e);
+        cssFiles = [];
+        jsFiles = [];
+        imagesFiles = [];
+    }
+    
+    // Generate CSS info with static path examples
+    let cssInfo = '';
+    if (cssFiles.length > 0) {
+        cssInfo = `\nFile CSS yang ada di lokasi static/templates/{{ theme.slug }}/:\n`;
+        cssFiles.forEach((file, index) => {
+            cssInfo += `   ${index + 1}. ${file.filename}\n`;
+        });
+        cssInfo += `\nLokasi CSS: static/templates/{{ theme.slug }}/\n`;
+        cssInfo += `Total file CSS: ${cssFiles.length} file\n\n`;
+        cssInfo += `Cara menambahkan CSS di &lt;head&gt; (TAMBAHKAN SEMUA FILE INI - GUNAKAN {% templatetag openvariable %} static {% templatetag closevariable %} TAG):\n`;
+        cssFiles.forEach((file) => {
+            cssInfo += `   &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/${themeSlug}/${file.filename}' {% templatetag closevariable %}"&gt;\n`;
+        });
+    } else {
+        cssInfo = `\nFile CSS: Belum ada file CSS di lokasi static/templates/{{ theme.slug }}/\n`;
+        cssInfo += `Lokasi CSS: static/templates/{{ theme.slug }}/\n`;
+        cssInfo += `Total file CSS: 0 file\n`;
+    }
+    
+    // Generate JS info with static path examples
+    let jsInfo = '';
+    if (jsFiles.length > 0) {
+        jsInfo = `\nFile JavaScript yang ada di lokasi static/templates/{{ theme.slug }}/:\n`;
+        jsFiles.forEach((file, index) => {
+            jsInfo += `   ${index + 1}. ${file.filename}\n`;
+        });
+        jsInfo += `\nLokasi JS: static/templates/{{ theme.slug }}/\n`;
+        jsInfo += `Total file JS: ${jsFiles.length} file\n\n`;
+        jsInfo += `Cara menambahkan JS sebelum &lt;/body&gt; (TAMBAHKAN SEMUA FILE INI - GUNAKAN {% templatetag openvariable %} static {% templatetag closevariable %} TAG):\n`;
+        jsFiles.forEach((file) => {
+            jsInfo += `   &lt;script src="{% templatetag openvariable %} static 'templates/${themeSlug}/${file.filename}' {% templatetag closevariable %}"&gt;&lt;/script&gt;\n`;
+        });
+    } else {
+        jsInfo = `\nFile JavaScript: Belum ada file JS di lokasi static/templates/{{ theme.slug }}/\n`;
+        jsInfo += `Lokasi JS: static/templates/{{ theme.slug }}/\n`;
+        jsInfo += `Total file JS: 0 file\n`;
+    }
+    
+    // Generate Images info
+    let imagesInfo = '';
+    if (imagesFiles.length > 0) {
+        imagesInfo = `\nFile Gambar yang sudah di-upload di lokasi media/templates_html/{{ theme.slug }}/images/:\n`;
+        imagesFiles.forEach((image, index) => {
+            imagesInfo += `   ${index + 1}. ${image.name}\n`;
+        });
+        imagesInfo += `\nLokasi Gambar: media/templates_html/{{ theme.slug }}/images/\n`;
+        imagesInfo += `Total file Gambar: ${imagesFiles.length} file\n`;
+    } else {
+        imagesInfo = `\nFile Gambar: Belum ada gambar yang di-upload di lokasi media/templates_html/{{ theme.slug }}/images/\n`;
+        imagesInfo += `Lokasi Gambar: media/templates_html/{{ theme.slug }}/images/\n`;
+        imagesInfo += `Total file Gambar: 0 file\n`;
+    }
+    
+    const prompt = `Saya punya sistem editor template undangan digital berbasis Django dengan spesifikasi berikut:
+
+=== STRUKTUR FOLDER ===
+- HTML utama: index.html (di folder templates/invitation_templates/templates/{{ theme.slug }}/)
+- CSS files: File CSS disimpan di lokasi static/templates/{{ theme.slug }}/${cssInfo}
+- JS files: File JavaScript disimpan di lokasi static/templates/{{ theme.slug }}/${jsInfo}
+- Media files (gambar, font, music): Disimpan di lokasi media/templates_html/{{ theme.slug }}/
+  - Gambar: media/templates_html/{{ theme.slug }}/images/${imagesInfo}
+  - Font: media/templates_html/{{ theme.slug }}/fonts/
+  - Music: media/templates_html/{{ theme.slug }}/music/ (default music untuk template)
+
+=== CARA MENAMBAHKAN CSS DAN JS ===
+1. TAMBAHKAN {% templatetag openblock %} load static {% templatetag closeblock %} di bagian ATAS template (setelah &lt;!DOCTYPE html&gt; atau di baris pertama)
+2. CSS: Tambahkan semua tag &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/{{ theme.slug }}/style1.css' {% templatetag closevariable %}"&gt; di bagian &lt;head&gt; HTML sesuai urutan file
+3. JS: Tambahkan semua tag &lt;script src="{% templatetag openvariable %} static 'templates/{{ theme.slug }}/script1.js' {% templatetag closevariable %}"&gt;&lt;/script&gt; di bagian bawah sebelum tag &lt;/body&gt; sesuai urutan file
+4. PENTING: Gunakan {% templatetag openvariable %} static {% templatetag closevariable %} tag untuk semua CSS/JS files, JANGAN gunakan path langsung
+
+=== PENTING TENTANG CSS DAN JS ===
+- TAMBAHKAN {% templatetag openblock %} load static {% templatetag closeblock %} di bagian ATAS template (baris pertama setelah &lt;!DOCTYPE html&gt;)
+- File CSS HARUS ditambahkan dengan tag &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/{{ theme.slug }}/style1.css' {% templatetag closevariable %}"&gt; di bagian &lt;head&gt; HTML
+- File JS HARUS ditambahkan dengan tag &lt;script src="{% templatetag openvariable %} static 'templates/{{ theme.slug }}/script1.js' {% templatetag closevariable %}"&gt;&lt;/script&gt; di bagian bawah sebelum &lt;/body&gt;
+- Format lengkap: &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/{{ theme.slug }}/style1.css' {% templatetag closevariable %}"&gt;
+- Urutan file ditentukan oleh angka di nama file (style1.css, style2.css, script1.js, script2.js, dst)
+- TAMBAHKAN SEMUA file CSS dan JS yang ada dengan tag &lt;link&gt; dan &lt;script&gt; sesuai urutan nomor file
+- JANGAN gunakan path langsung seperti /media/ atau /static/, selalu gunakan {% templatetag openvariable %} static {% templatetag closevariable %} tag
+
+=== ATURAN KONVERSI HTML STATIS KE DJANGO TEMPLATE ===
+
+1. VARIABEL GROOM (Mempelai Pria) - GUNAKAN DENGAN FALLBACK:
+   - {% templatetag openvariable %} groom.full_name|default:"Eka" {% templatetag closevariable %} → Nama lengkap (gunakan nilai hardcode dari template asli sebagai default)
+   - {% templatetag openvariable %} groom.nickname|default:"Eka" {% templatetag closevariable %} → Nama panggilan
+   - {% templatetag openvariable %} groom.father_name|default:"Tjipto Gunawan" {% templatetag closevariable %} → Nama ayah
+   - {% templatetag openvariable %} groom.mother_name|default:"Felicia Susanto" {% templatetag closevariable %} → Nama ibu
+   - {% templatetag openvariable %} groom.child_order|default:"Pertama" {% templatetag closevariable %} → Anak ke-
+   - {% templatetag openvariable %} groom.main_photo.url|default:"" {% templatetag closevariable %} → Foto utama (jika ada)
+   - PENTING: Gunakan nilai hardcode yang sudah ada di template asli sebagai default, jangan hapus hardcode tersebut
+
+2. VARIABEL BRIDE (Mempelai Wanita) - GUNAKAN DENGAN FALLBACK:
+   - {% templatetag openvariable %} bride.full_name|default:"Indah" {% templatetag closevariable %} → Nama lengkap (gunakan nilai hardcode dari template asli sebagai default)
+   - {% templatetag openvariable %} bride.nickname|default:"Indah" {% templatetag closevariable %} → Nama panggilan
+   - {% templatetag openvariable %} bride.father_name|default:"Budiman Thamrin" {% templatetag closevariable %} → Nama ayah
+   - {% templatetag openvariable %} bride.mother_name|default:"Sarah Erawati" {% templatetag closevariable %} → Nama ibu
+   - {% templatetag openvariable %} bride.child_order|default:"Pertama" {% templatetag closevariable %} → Anak ke-
+   - {% templatetag openvariable %} bride.main_photo.url|default:"" {% templatetag closevariable %} → Foto utama (jika ada)
+   - PENTING: Gunakan nilai hardcode yang sudah ada di template asli sebagai default, jangan hapus hardcode tersebut
+
+3. VARIABEL EVENT (Acara Pernikahan) - GUNAKAN DENGAN FALLBACK:
+   Acara Akad:
+   - {% templatetag openvariable %} event.akad.event_name|default:"Acara Pernikahan" {% templatetag closevariable %} → Nama acara akad
+   - {% templatetag openvariable %} event.akad.event_date|default:"Minggu, 5 Mei 2025" {% templatetag closevariable %} → Tanggal akad
+   - {% templatetag openvariable %} event.akad.start_time|default:"08:00" {% templatetag closevariable %} → Waktu mulai
+   - {% templatetag openvariable %} event.akad.end_time|default:"10:00" {% templatetag closevariable %} → Waktu selesai
+   - {% templatetag openvariable %} event.akad.venue_name|default:"Hotel Shangri-La" {% templatetag closevariable %} → Nama venue
+   - {% templatetag openvariable %} event.akad.venue_address|default:"Jl. Jend. Sudirman No.Kav. 1" {% templatetag closevariable %} → Alamat venue
+   - {% templatetag openvariable %} event.akad.google_maps_url|default:"#" {% templatetag closevariable %} → Link Google Maps
+   
+   Acara Reception (jika ada):
+   - {% templatetag openvariable %} event.reception.event_name|default:"Resepsi" {% templatetag closevariable %} → Nama acara reception
+   - {% templatetag openvariable %} event.reception.event_date|default:"Minggu, 5 Mei 2025" {% templatetag closevariable %} → Tanggal reception
+   - {% templatetag openvariable %} event.reception.venue_name|default:"Hotel Shangri-La" {% templatetag closevariable %} → Nama venue
+   - {% templatetag openvariable %} event.reception.venue_address|default:"Jl. Jend. Sudirman No.Kav. 1" {% templatetag closevariable %} → Alamat venue
+   - {% templatetag openvariable %} event.reception.google_maps_url|default:"#" {% templatetag closevariable %} → Link Google Maps
+   
+   Catatan: 
+   - Gunakan {% templatetag openblock %} if event.reception {% templatetag closeblock %} untuk cek apakah ada reception
+   - Gunakan nilai hardcode yang sudah ada di template asli sebagai default
+
+4. PHOTO GALLERY (Galeri Foto - Loop):
+   {% templatetag openblock %} for photo in photo_gallery {% templatetag closeblock %}
+       &lt;img src="{% templatetag openvariable %} photo.image.url {% templatetag closevariable %}" alt="{% templatetag openvariable %} photo.caption {% templatetag closevariable %}"&gt;
+       &lt;p&gt;{% templatetag openvariable %} photo.caption {% templatetag closevariable %}&lt;/p&gt;
+   {% templatetag openblock %} endfor {% templatetag closeblock %}
+   
+   Field tersedia: photo.image.url, photo.caption, photo.order
+
+5. LOVE STORIES (Kisah Cinta - Loop):
+   {% templatetag openblock %} for story in love_stories {% templatetag closeblock %}
+       &lt;div class="story-item"&gt;
+           &lt;h3&gt;{% templatetag openvariable %} story.title {% templatetag closevariable %}&lt;/h3&gt;
+           &lt;p class="date"&gt;{% templatetag openvariable %} story.date {% templatetag closevariable %}&lt;/p&gt;
+           &lt;p&gt;{% templatetag openvariable %} story.description {% templatetag closevariable %}&lt;/p&gt;
+           {% templatetag openblock %} if story.image {% templatetag closeblock %}
+               &lt;img src="{% templatetag openvariable %} story.image.url {% templatetag closevariable %}" alt="{% templatetag openvariable %} story.title {% templatetag closevariable %}"&gt;
+           {% templatetag openblock %} endif {% templatetag closeblock %}
+       &lt;/div&gt;
+   {% templatetag openblock %} endfor {% templatetag closeblock %}
+   
+   Field tersedia: story.title, story.date, story.description, story.image.url, story.order
+
+6. GUEST NAME (Nama Tamu - Opsional):
+   {% templatetag openblock %} if guest_name {% templatetag closeblock %}
+       &lt;p&gt;Kepada Yth. {% templatetag openvariable %} guest_name {% templatetag closevariable %}&lt;/p&gt;
+   {% templatetag openblock %} endif {% templatetag closeblock %}
+
+7. WEDDING WISHES (Ucapan/Doa dari Tamu - Loop):
+   - Wishes disimpan dalam format list dari database
+   - Untuk preview template: gunakan wishes dari TemplateWish (default wishes untuk testing)
+   - Untuk undangan real: gunakan wishes dari InvitationWish (wishes real dari tamu)
+   - Form wishes hanya aktif untuk undangan real, dinonaktifkan untuk preview template
+   
+   Contoh implementasi di HTML:
+   &lt;div id="wishes_wrapper"&gt;
+       {% templatetag openblock %} if wishes {% templatetag closeblock %}
+           {% templatetag openblock %} for wish in wishes {% templatetag closeblock %}
+           &lt;div class="wish-item mb-4" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;"&gt;
+               &lt;div class="d-flex align-items-start"&gt;
+                   {% templatetag openblock %} if wish.image {% templatetag closeblock %}
+                   &lt;div class="me-3"&gt;
+                       &lt;img src="{% templatetag openvariable %} wish.image {% templatetag closevariable %}" alt="{% templatetag openvariable %} wish.name {% templatetag closevariable %}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 50%;"&gt;
+                   &lt;/div&gt;
+                   {% templatetag openblock %} endif {% templatetag closeblock %}
+                   &lt;div class="flex-grow-1"&gt;
+                       &lt;h6 class="mb-1 notranslate"&gt;{% templatetag openvariable %} wish.name {% templatetag closevariable %}&lt;/h6&gt;
+                       {% templatetag openblock %} if wish.address {% templatetag closeblock %}
+                       &lt;p class="text-muted small mb-2"&gt;{% templatetag openvariable %} wish.address {% templatetag closevariable %}&lt;/p&gt;
+                       {% templatetag openblock %} endif {% templatetag closeblock %}
+                       &lt;p class="mb-0"&gt;{% templatetag openvariable %} wish.comment {% templatetag closevariable %}&lt;/p&gt;
+                       &lt;small class="text-muted"&gt;{% templatetag openvariable %} wish.submitted_at|date:"d M Y, H:i" {% templatetag closevariable %}&lt;/small&gt;
+                   &lt;/div&gt;
+               &lt;/div&gt;
+           &lt;/div&gt;
+           {% templatetag openblock %} endfor {% templatetag closeblock %}
+       {% templatetag openblock %} else {% templatetag closeblock %}
+           &lt;p class="mb-4"&gt;&lt;b&gt;Belum ada ucapan. Jadilah yang pertama mengucapkan selamat!&lt;/b&gt;&lt;/p&gt;
+       {% templatetag openblock %} endif {% templatetag closeblock %}
+   &lt;/div&gt;
+   
+   Field tersedia: wish.name, wish.address, wish.comment, wish.image, wish.submitted_at
+   
+   CATATAN PENTING:
+   - Form wishes harus memiliki id="guestbook_form" dan onsubmit="return false;" untuk mencegah reload
+   - Form harus memiliki {% templatetag openblock %} csrf_token {% templatetag closeblock %} untuk keamanan
+   - Form harus memiliki input dengan name="name", name="alamat", name="comment", dan name="image" (file upload, opsional)
+   - Form harus memiliki button dengan id="guestbook_submit_btn" dan type="submit"
+   - Form harus memiliki div dengan id="wish_message" untuk menampilkan pesan feedback
+   - JavaScript AJAX akan menangani submit form tanpa reload (sudah diimplementasikan di template)
+   - Untuk preview template, form akan otomatis dinonaktifkan oleh JavaScript
+
+8. GAMBAR STATIS, FONT, DAN MUSIC (Media files):
+   PENTING: Semua file media (gambar, font, music) harus menggunakan path LENGKAP LANGSUNG tanpa variabel Django (browser tidak mengenali {{ theme.slug }})
+   
+   Lokasi default:
+   - Gambar: media/templates_html/${themeSlug}/images/
+   - Font: media/templates_html/${themeSlug}/fonts/
+   - Music: media/templates_html/${themeSlug}/music/
+   
+   CATATAN: Font files juga harus menggunakan path lengkap:
+   - Format font: url('/media/templates_html/${themeSlug}/fonts/nama-font.woff2')
+   - Ganti semua url(fonts/...) menjadi url('/media/templates_html/${themeSlug}/fonts/...')
+   
+   CATATAN: Music file (background music):
+   - Music file default untuk template disimpan dengan nama: default.mp3 (atau default.wav, default.ogg, dll sesuai extension)
+   - Lokasi: media/templates_html/${themeSlug}/music/default.mp3
+   - Untuk template preview/default, gunakan path langsung: /media/templates_html/${themeSlug}/music/default.mp3
+   - Untuk undangan real, gunakan: {% templatetag openblock %} if event.background_music {% templatetag closeblock %}
+   - &lt;audio id="audio_file" class="d-none"&gt;
+   - &lt;source src="{% templatetag openvariable %} event.background_music.url {% templatetag closevariable %}" type="audio/mpeg"&gt;
+   - &lt;/audio&gt;
+   - {% templatetag openblock %} else {% templatetag closeblock %}
+   - &lt;audio id="audio_file" class="d-none"&gt;
+   - &lt;source src="/media/templates_html/${themeSlug}/music/default.mp3" type="audio/mpeg"&gt;
+   - &lt;/audio&gt;
+   - {% templatetag openblock %} endif {% templatetag closeblock %}
+   - Music file disimpan di media/templates_html/{slug}/music/ (hanya 1 file per template, selalu bernama default.{extension})
+   
+   ${imagesFiles.length > 0 ? `Gambar yang SUDAH TERSEDIA di folder images/ (GUNAKAN NAMA FILE INI, JANGAN UBAH NAMANYA):\n${imagesFiles.map((img, idx) => `   ${idx + 1}. ${img.name}`).join('\n')}\n\n` : 'Belum ada gambar yang di-upload. Anda bisa upload gambar melalui tab Images di editor.\n\n'}
+   
+   ATURAN PENTING GAMBAR:
+   - Jika gambar sudah di-upload, GUNAKAN NAMA FILE YANG SUDAH ADA (jangan ubah namanya)
+   - Jika gambar belum ada, buat placeholder dengan nama file yang akan di-upload nanti
+   - Path gambar HARUS menggunakan path LENGKAP LANGSUNG: /media/templates_html/${themeSlug}/images/NAMA-FILE-YANG-SUDAH-ADA
+   - JANGAN gunakan {{ theme.slug }} atau {% templatetag openvariable %} theme.slug {% templatetag closevariable %} di path gambar
+   - JANGAN mengubah nama file gambar yang sudah di-upload, gunakan nama aslinya
+   
+   Contoh penggunaan gambar di HTML (gunakan nama file yang sudah ada di atas):
+   - Gambar langsung:
+     &lt;img src="/media/templates_html/${themeSlug}/images/${imagesFiles.length > 0 ? imagesFiles[0].name : 'nama-file.jpg'}" alt="Description"&gt;
+   
+   - Background image:
+     &lt;section style="background-image: url('/media/templates_html/${themeSlug}/images/${imagesFiles.length > 0 ? imagesFiles[0].name : 'nama-file.jpg'}');"&gt;
+   
+   - Background dengan CSS:
+     .hero { background-image: url('/media/templates_html/${themeSlug}/images/${imagesFiles.length > 0 ? imagesFiles[0].name : 'nama-file.jpg'}'); }
+   
+   - Icon atau asset kecil:
+     &lt;img src="/media/templates_html/${themeSlug}/images/${imagesFiles.length > 1 ? imagesFiles[1].name : 'icon.png'}" alt="Icon"&gt;
+
+8. CARA MENAMBAHKAN CSS DAN JS:
+   - TAMBAHKAN {% templatetag openblock %} load static {% templatetag closeblock %} di bagian ATAS template (setelah &lt;!DOCTYPE html&gt; atau di baris pertama)
+   - TAMBAHKAN semua file CSS dengan tag &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/${themeSlug}/style1.css' {% templatetag closevariable %}"&gt; di &lt;head&gt;
+   - TAMBAHKAN semua file JS dengan tag &lt;script src="{% templatetag openvariable %} static 'templates/${themeSlug}/script1.js' {% templatetag closevariable %}"&gt;&lt;/script&gt; sebelum &lt;/body&gt;
+   - PENTING: Gunakan {% templatetag openvariable %} static {% templatetag closevariable %} tag untuk semua CSS/JS files
+   - Format: {% templatetag openvariable %} static 'templates/${themeSlug}/style1.css' {% templatetag closevariable %}
+   - Urutkan sesuai nomor file (style1.css, style2.css, script1.js, script2.js, dst)
+   - TAMBAHKAN SEMUA file CSS dan JS yang ada dengan tag &lt;link&gt; dan &lt;script&gt; sesuai urutan nomor file
+   - JANGAN tambahkan CDN baru jika template asli tidak menggunakan CDN
+   - Jika template asli sudah menggunakan CDN (Bootstrap, Font Awesome, dll), pertahankan CDN tersebut
+
+9. STRUKTUR HTML YANG DIHARAPKAN:
+   - Pastikan ada tag &lt;head&gt; dan &lt;body&gt;
+   - CSS ditambahkan dengan tag &lt;link rel="stylesheet"&gt; di &lt;head&gt;
+   - JS ditambahkan dengan tag &lt;script src="..."&gt; sebelum &lt;/body&gt;
+   - Gunakan semantic HTML yang baik
+
+=== TEMA YANG SEDANG DIKERJAKAN ===
+Nama Tema: {{ theme.name }}
+Slug Tema: {{ theme.slug }}
+Lokasi CSS/JS: static/templates/{{ theme.slug }}/
+Lokasi HTML: media/templates_html/{{ theme.slug }}/index.html
+Path Gambar: media/templates_html/{{ theme.slug }}/images/
+Jumlah File CSS: ${cssFiles.length} file
+Jumlah File JS: ${jsFiles.length} file
+Jumlah File Gambar: ${imagesFiles.length} file
+
+CATATAN PENTING:
+- CSS dan JS files sekarang disimpan di static/templates/{{ theme.slug }}/ (BUKAN di media folder)
+- Gunakan {% templatetag openvariable %} static 'templates/{{ theme.slug }}/filename.css' {% templatetag closevariable %} untuk CSS
+- Gunakan {% templatetag openvariable %} static 'templates/{{ theme.slug }}/filename.js' {% templatetag closevariable %} untuk JS
+- JANGAN gunakan path langsung seperti /media/ atau /static/, selalu gunakan {% templatetag openvariable %} static {% templatetag closevariable %} tag
+
+=== HTML STATIS YANG PERLU DI-CONVERT ===
+--- MULAI HTML ---
+[PASTE HTML STATIS ANDA DI SINI]
+--- SELESAI HTML ---
+
+=== INSTRUKSI ===
+Tolong konversi HTML statis di atas menjadi template Django dengan:
+
+1. VARIABEL DJANGO DENGAN FALLBACK HARDCODE:
+   - JANGAN hapus hardcode yang sudah ada, gunakan sebagai fallback default
+   - Gunakan format: {% templatetag openvariable %} variable|default:"hardcode_value" {% templatetag closevariable %}
+   - Contoh: {% templatetag openvariable %} groom.full_name|default:"Eka" {% templatetag closevariable %}
+   - Jika data Django tidak ada, akan menggunakan nilai hardcode yang sudah ada sebelumnya
+   - Semua teks hardcode (nama, tanggal, lokasi) harus tetap ada sebagai default fallback
+
+2. HAPUS WATERMARK DAN URL EKSTERNAL:
+   - HAPUS SEMUA watermark, branding, atau URL eksternal (seperti http://viding.co, viding.co, viding.co/theme/preview/162, dll)
+   - GANTI semua branding menjadi "Invywed" atau "Invywed.com"
+   - HAPUS semua link eksternal yang tidak relevan atau mengarah ke domain lain
+   - HAPUS semua meta tag yang mengarah ke domain eksternal (og:url, og:image dengan domain eksternal, dll)
+   - HAPUS semua referensi ke domain/URL eksternal di dalam HTML, CSS, dan JavaScript
+   - GANTI semua copyright/footer text menjadi "Invywed" atau sesuai branding
+
+3. CDN DAN LIBRARY EKSTERNAL:
+   - JANGAN tambahkan CDN jika di template asli TIDAK ada CDN
+   - Jika template asli sudah menggunakan CDN (Bootstrap, Font Awesome, jQuery, dll), PERTAHANKAN CDN tersebut
+   - Jika template asli TIDAK menggunakan CDN, JANGAN tambahkan CDN baru
+   - Hanya gunakan file CSS/JS yang sudah ada di folder tema
+   - JANGAN menambahkan library eksternal baru jika tidak ada di template asli
+
+4. PATH GAMBAR DAN FONT:
+   - Ganti semua path gambar statis dengan path LENGKAP LANGSUNG tanpa variabel Django
+   - GUNAKAN NAMA FILE YANG SUDAH ADA di folder images/ (jangan ubah namanya)
+   - Format: /media/templates_html/${themeSlug}/images/NAMA-FILE-YANG-SUDAH-ADA
+   - Ganti semua path font files dengan path LENGKAP LANGSUNG: /media/templates_html/${themeSlug}/fonts/nama-font.woff2
+   - Contoh: url(fonts/ez6djcl7duFx.woff2) → url('/media/templates_html/${themeSlug}/fonts/ez6djcl7duFx.woff2')
+   - JANGAN gunakan {{ theme.slug }} atau {% templatetag openvariable %} theme.slug {% templatetag closevariable %} di path gambar/font
+
+5. CSS DAN JS FILES:
+   - TAMBAHKAN {% templatetag openblock %} load static {% templatetag closeblock %} di bagian ATAS template (baris pertama setelah &lt;!DOCTYPE html&gt;)
+   - TAMBAHKAN semua tag &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/${themeSlug}/style1.css' {% templatetag closevariable %}"&gt; untuk CSS di &lt;head&gt; sesuai daftar file CSS di atas (semua file CSS harus ditambahkan)
+   - TAMBAHKAN semua tag &lt;script src="{% templatetag openvariable %} static 'templates/${themeSlug}/script1.js' {% templatetag closevariable %}"&gt;&lt;/script&gt; untuk JS sebelum &lt;/body&gt; sesuai daftar file JS di atas (semua file JS harus ditambahkan)
+   - PENTING: Gunakan {% templatetag openvariable %} static 'templates/${themeSlug}/filename.css' {% templatetag closevariable %} untuk semua CSS/JS files
+   - Format lengkap: &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/${themeSlug}/style1.css' {% templatetag closevariable %}"&gt;
+   - TAMBAHKAN SEMUA file CSS dan JS yang ada dengan tag &lt;link&gt; dan &lt;script&gt; sesuai urutan nomor file
+   - Hasilkan file index.html lengkap dan siap digunakan
+
+6. HAPUS BACKEND LAMA DI JAVASCRIPT:
+   - HAPUS semua komentar kode backend lama (seperti komentar RSVP, form submission, dll)
+   - HAPUS semua fungsi JavaScript yang terkait dengan backend lama (seperti $.ajax, fetch, dll)
+   - HAPUS semua event listener yang mengirim data ke backend lama
+   - HAPUS semua AJAX call atau fetch ke endpoint backend lama (seperti "https://viding.co/...")
+   - HAPUS semua kode yang terkait dengan form submission ke backend lama
+   - HAPUS semua konstanta JavaScript yang mengarah ke backend lama (seperti const APP_URL = "https://viding.co/...")
+   - HAPUS semua form action yang mengarah ke backend lama (seperti action="https://viding.co/...")
+   - HAPUS semua fungsi validasi form yang mengirim data ke backend (seperti $("#tambahdata").validate, $("#guestbook_form").validate)
+   - HAPUS semua fungsi yang memuat data dari backend (seperti reload_guestbook_data, load, dll)
+   - Template harus bersih dari kode backend lama, hanya HTML/CSS/JS untuk tampilan saja
+
+7. KODE WAJIB LENGKAP:
+   - Hasilkan kode HTML LENGKAP sesuai dengan HTML yang dikasih ke AI
+   - JANGAN menghapus atau mengurangi bagian HTML yang ada di template asli
+   - Semua elemen, section, dan struktur HTML harus tetap ada
+   - Kode harus lengkap ribuan baris sesuai dengan template asli yang dikasih ke AI
+   - Semua style inline, script inline untuk animasi/tampilan BISA dipertahankan (kecuali yang terkait backend)
+
+9. LOOP DAN KONDISI:
+   - Implementasikan loop untuk photo_gallery dan love_stories jika ada di HTML
+   - Gunakan {% templatetag openblock %} if {% templatetag closeblock %} untuk kondisi optional
+   - PENTING: Semua tag Django template ({% templatetag openblock %} if {% templatetag closeblock %}, {% templatetag openblock %} else {% templatetag closeblock %}, {% templatetag openblock %} endif {% templatetag closeblock %}, {% templatetag openblock %} for {% templatetag closeblock %}, {% templatetag openblock %} endfor {% templatetag closeblock %}, dll) HARUS dalam SATU BARIS, JANGAN terpecah di beberapa baris
+   - Contoh BENAR: {% templatetag openblock %} if event.reception {% templatetag closeblock %}{% templatetag openvariable %} event.reception.venue_name|default:"Hotel" {% templatetag closevariable %}{% templatetag openblock %} else {% templatetag closeblock %}{% templatetag openvariable %} event.akad.venue_name|default:"Hotel" {% templatetag closevariable %}{% templatetag openblock %} endif {% templatetag closeblock %}
+   - Contoh SALAH (JANGAN LAKUKAN): 
+     {% templatetag openblock %} if
+     event.reception {% templatetag closeblock %}{% templatetag openvariable %}
+     event.reception.venue_name|default:"Hotel"
+     {% templatetag closevariable %}{% templatetag openblock %} else {% templatetag closeblock %}{% templatetag openvariable %}
+     event.akad.venue_name|default:"Hotel"
+     {% templatetag closevariable %}{% templatetag openblock %} endif {% templatetag closeblock %}
+   - Jika tag Django terpecah di beberapa baris, Django parser akan error dengan "Invalid block tag" atau "Invalid block tag on line X: 'endif'"
+
+10. STRUKTUR HTML:
+   - Pastikan struktur HTML lengkap dengan DOCTYPE, &lt;html&gt;, &lt;head&gt; (berisi CSS), dan &lt;body&gt; (berisi JS sebelum closing tag)
+   - Hasilkan file index.html lengkap dan siap digunakan
+
+11. BRANDING:
+   - Ganti semua branding menjadi "Invywed" atau sesuai konteks
+   - Hapus semua referensi ke brand/domain lain
+
+CONTOH PENGGUNAAN VARIABEL DENGAN FALLBACK:
+- Nama: {% templatetag openvariable %} groom.full_name|default:"Eka" {% templatetag closevariable %}
+- Tanggal: {% templatetag openvariable %} event.akad.event_date|default:"Minggu, 5 Mei 2025" {% templatetag closevariable %}
+- Lokasi: {% templatetag openvariable %} event.akad.venue_name|default:"Hotel Shangri-La" {% templatetag closevariable %}
+
+CONTOH PENGGUNAAN MUSIC FILE:
+- Untuk template preview/default (hardcode path):
+  &lt;audio id="audio_file" class="d-none"&gt;
+  &lt;source src="/media/templates_html/${themeSlug}/music/default.mp3" type="audio/mpeg"&gt;
+  &lt;/audio&gt;
+
+- Untuk undangan real (dengan fallback ke default):
+  {% templatetag openblock %} if event.background_music {% templatetag closeblock %}&lt;audio id="audio_file" class="d-none"&gt;&lt;source src="{% templatetag openvariable %} event.background_music.url {% templatetag closevariable %}" type="audio/mpeg"&gt;&lt;/audio&gt;{% templatetag openblock %} else {% templatetag closeblock %}&lt;audio id="audio_file" class="d-none"&gt;&lt;source src="/media/templates_html/${themeSlug}/music/default.mp3" type="audio/mpeg"&gt;&lt;/audio&gt;{% templatetag openblock %} endif {% templatetag closeblock %}
+
+CATATAN PENTING MUSIC:
+- Music file selalu di-rename menjadi default.{extension} (default.mp3, default.wav, dll)
+- Gunakan path lengkap langsung: /media/templates_html/${themeSlug}/music/default.mp3
+- JANGAN gunakan variabel Django di path music untuk template preview
+
+Hasilkan kode HTML Django template yang lengkap dan siap digunakan.`;
+    
+    const textarea = document.getElementById('promptTextarea');
+    if (textarea) {
+        textarea.value = prompt;
+    } else {
+        console.error('promptTextarea element not found');
+    }
+}
+
+// Variables modal functions (available in both create and edit mode)
+function openVariablesModal() {
+    document.getElementById('variablesModal').classList.remove('hidden');
+}
+
+function closeVariablesModal() {
+    document.getElementById('variablesModal').classList.add('hidden');
+}
+
+// Close modals on outside click
+document.addEventListener('DOMContentLoaded', function() {
+    const variablesModal = document.getElementById('variablesModal');
+    if (variablesModal) {
+        variablesModal.addEventListener('click', function(e) {
+            if (e.target === this) closeVariablesModal();
+        });
+    }
+});
+
+// Edit mode: Ace editor for HTML only
+let aceEditors = {
+    html: null
+};
+
+// Initialize HTML content from Django template context
+let htmlContent = '';
+
+// Parse JSON data from hidden script tags
+try {
+    const htmlDataElement = document.getElementById('html-content-data');
+    
+    if (htmlDataElement) {
+        htmlContent = JSON.parse(htmlDataElement.textContent) || '';
+    }
+} catch (e) {
+    console.error('Error parsing HTML data:', e);
+    htmlContent = '';
+}
+
+// Initialize Ace editor
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Initialize HTML Editor
+    aceEditors.html = ace.edit('htmlEditorContainer');
+    aceEditors.html.setTheme('ace/theme/github');
+    aceEditors.html.session.setMode('ace/mode/html');
+    aceEditors.html.setOptions({
+        fontSize: 14,
+        showPrintMargin: false,
+        wrap: true,
+    });
+    aceEditors.html.setValue(htmlContent);
+    
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const fileType = this.dataset.file;
+            switchTab(fileType);
+        });
+    });
+});
+
+function switchTab(fileType) {
+    // Update buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.file === fileType) {
+            btn.classList.add('active', 'border-indigo-500', 'text-indigo-600');
+            btn.classList.remove('border-transparent', 'text-gray-500');
+        } else {
+            btn.classList.remove('active', 'border-indigo-500', 'text-indigo-600');
+            btn.classList.add('border-transparent', 'text-gray-500');
+        }
+    });
+    
+    // Update content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    document.getElementById('tab-' + fileType).classList.remove('hidden');
+    
+    // Resize Ace editor when tab becomes visible
+    setTimeout(() => {
+        if (fileType === 'html' && aceEditors.html) {
+            aceEditors.html.resize();
+        }
+    }, 100);
+}
+
+async function saveAllFiles() {
+    showLoading(true);
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'save_files');
+        formData.append('html_content', aceEditors.html ? aceEditors.html.getValue() : '');
+        
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': getCsrfToken()}
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', 'HTML file saved successfully!');
+        } else {
+            showAlert('error', data.message || 'Failed to save file');
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function validateTemplate() {
+    showLoading(true);
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'validate');
+        formData.append('html_content', aceEditors.html ? aceEditors.html.getValue() : '');
+        
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': getCsrfToken()}
+        });
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response:', text.substring(0, 200));
+            showAlert('error', `Server error: ${response.status} ${response.statusText}`);
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            displayValidationResults(data.results);
+            openValidationModal();
+        } else {
+            showAlert('error', data.message || 'Validation failed');
+        }
+    } catch (error) {
+        console.error('Validation error:', error);
+        showAlert('error', 'Network error occurred: ' + error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displayValidationResults(results) {
+    const content = document.getElementById('validationContent');
+    let html = '<div class="space-y-4">';
+    
+    if (results.errors && results.errors.length > 0) {
+        html += '<div class="bg-red-50 border border-red-200 rounded-lg p-4"><h4 class="font-semibold text-red-800 mb-2">Errors:</h4><ul class="list-disc list-inside text-sm text-red-700 space-y-1">';
+        results.errors.forEach(error => {
+            html += `<li>${error}</li>`;
+        });
+        html += '</ul></div>';
+    }
+    
+    if (results.warnings && results.warnings.length > 0) {
+        html += '<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4"><h4 class="font-semibold text-yellow-800 mb-2">Warnings:</h4><ul class="list-disc list-inside text-sm text-yellow-700 space-y-1">';
+        results.warnings.forEach(warning => {
+            html += `<li>${warning}</li>`;
+        });
+        html += '</ul></div>';
+    }
+    
+    if (results.variables && results.variables.length > 0) {
+        html += '<div class="bg-blue-50 border border-blue-200 rounded-lg p-4"><h4 class="font-semibold text-blue-800 mb-2">Found Variables:</h4><ul class="list-disc list-inside text-sm text-blue-700 space-y-1">';
+        results.variables.forEach(variable => {
+            html += `<li><code>${variable}</code></li>`;
+        });
+        html += '</ul></div>';
+    }
+    
+    if ((!results.errors || results.errors.length === 0) && (!results.warnings || results.warnings.length === 0)) {
+        html += '<div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center"><i class="fas fa-check-circle text-green-600 text-3xl mb-2"></i><p class="text-green-800 font-semibold">Template validation passed!</p></div>';
+    }
+    
+    html += '</div>';
+    content.innerHTML = html;
+}
+
+function openValidationModal() {
+    document.getElementById('validationModal').classList.remove('hidden');
+}
+
+function closeValidationModal() {
+    document.getElementById('validationModal').classList.add('hidden');
+}
+
+async function uploadImages(input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    showLoading(true);
+    
+    const formData = new FormData();
+    formData.append('action', 'upload_images');
+    for (let i = 0; i < input.files.length; i++) {
+        formData.append('images', input.files[i]);
+    }
+    
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': getCsrfToken()}
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', `${data.count} image(s) uploaded successfully!`);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert('error', data.message || 'Failed to upload images');
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+        input.value = '';
+    }
+}
+
+function copyImageCode(imageUrl, imageName) {
+    const code = `<img src="${imageUrl}" alt="${imageName}">`;
+    navigator.clipboard.writeText(code).then(() => {
+        showAlert('success', 'Image code copied! Paste it in your HTML editor.');
+    });
+}
+
+async function deleteImage(imageName) {
+    if (!confirm(`Delete image "${imageName}"?`)) return;
+    
+    showLoading(true);
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'delete_image');
+        formData.append('image_name', imageName);
+        
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': getCsrfToken()}
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', 'Image deleted successfully!');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert('error', data.message || 'Failed to delete image');
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+</script>
+{% endblock %}

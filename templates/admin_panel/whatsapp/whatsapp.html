@@ -1,0 +1,601 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}WhatsApp Management - Invywed Admin{% endblock %}
+{% block page_title %}WhatsApp Management{% endblock %}
+{% block page_subtitle %}Kelola nomor WhatsApp dan template pesan{% endblock %}
+
+{% block content %}
+<!-- WhatsApp Numbers Section -->
+<div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-phone mr-2 text-green-500"></i>
+                Nomor WhatsApp
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">Kelola nomor WhatsApp untuk menerima pesan dari user</p>
+        </div>
+        {% if numbers.count < 1 %}
+        <button onclick="openNumberModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Tambah Nomor
+        </button>
+        {% else %}
+        <span class="text-sm text-gray-500">Hanya 1 nomor WhatsApp yang diizinkan</span>
+        {% endif %}
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for number in numbers %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <i class="fab fa-whatsapp text-green-500 mr-2"></i>
+                                <span class="text-sm font-medium text-gray-900">{{ number.phone_number }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm text-gray-900">{{ number.name }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if number.is_active %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if number.is_default %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-star mr-1"></i>Default
+                                </span>
+                            {% else %}
+                                <span class="text-sm text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <button onclick="openNumberModal({{ number.pk }}, this)" 
+                                        data-phone="{{ number.phone_number }}" 
+                                        data-name="{{ number.name }}" 
+                                        data-active="{{ number.is_active|yesno:"true,false" }}" 
+                                        data-default="{{ number.is_default|yesno:"true,false" }}"
+                                        class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="showDeleteNumberModal({{ number.pk }}, '{{ number.phone_number|escapejs }}')" class="text-red-600 hover:text-red-900 transition-colors duration-200 cursor-pointer" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <i class="fab fa-whatsapp text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">Tidak ada nomor WhatsApp</p>
+                            <button onclick="openNumberModal()" class="mt-4 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                                Tambah nomor pertama
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- WhatsApp Templates Section -->
+<div class="bg-white shadow-sm rounded-lg border border-gray-200">
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-file-alt mr-2 text-indigo-500"></i>
+                Template WhatsApp
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">Kelola template pesan yang bisa dikirim user ke admin</p>
+        </div>
+        <button onclick="openTemplateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Tambah Template
+        </button>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Template</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Isi Pesan</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penggunaan</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for template in templates %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <i class="fas fa-file-alt text-indigo-500 mr-2"></i>
+                                <span class="text-sm font-medium text-gray-900">{{ template.template_name }}</span>
+                                {% if template.is_default %}
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-star mr-1"></i>Default
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ template.get_template_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-gray-500">{{ template.message_content|truncatewords:15 }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if template.is_active %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ template.usage_count }}x
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <button onclick="openTemplateModal({{ template.pk }}, this)" 
+                                        data-name="{{ template.template_name }}" 
+                                        data-type="{{ template.template_type }}" 
+                                        data-content="{{ template.message_content }}" 
+                                        data-active="{{ template.is_active|yesno:"true,false" }}" 
+                                        data-default="{{ template.is_default|yesno:"true,false" }}"
+                                        class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="showDeleteTemplateModal({{ template.pk }}, '{{ template.template_name|escapejs }}')" class="text-red-600 hover:text-red-900 transition-colors duration-200 cursor-pointer" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <i class="fas fa-file-alt text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">Tidak ada template</p>
+                            <button onclick="openTemplateModal()" class="mt-4 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                                Tambah template pertama
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Number Modal -->
+<div id="numberModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900" id="numberModalTitle">Tambah Nomor WhatsApp</h3>
+            <button onclick="closeNumberModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="numberForm" onsubmit="saveNumber(event)">
+            <div class="space-y-4">
+                <div>
+                    <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor WhatsApp <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="phone_number"
+                        name="phone_number"
+                        placeholder="Contoh: +6281234567890"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                </div>
+                
+                <div>
+                    <label for="number_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="number_name"
+                        name="name"
+                        placeholder="Contoh: Admin Support"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="number_is_active"
+                            name="is_active"
+                            checked
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        >
+                        <label for="number_is_active" class="ml-2 block text-sm text-gray-700">
+                            Status Aktif
+                        </label>
+                    </div>
+                    
+                    {% if not has_default %}
+                    <div class="flex items-center" id="defaultCheckboxContainer">
+                        <input
+                            type="checkbox"
+                            id="number_is_default"
+                            name="is_default"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        >
+                        <label for="number_is_default" class="ml-2 block text-sm text-gray-700">
+                            Nomor Default
+                        </label>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-6 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeNumberModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Template Modal -->
+<div id="templateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900" id="templateModalTitle">Tambah Template WhatsApp</h3>
+            <button onclick="closeTemplateModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="templateForm" onsubmit="saveTemplate(event)">
+            <div class="space-y-4">
+                <div>
+                    <label for="template_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Template <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="template_name"
+                        name="template_name"
+                        placeholder="Contoh: Template Pertanyaan Umum"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                </div>
+                
+                <div>
+                    <label for="template_type" class="block text-sm font-medium text-gray-700 mb-2">
+                        Tipe Template <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                        id="template_type"
+                        name="template_type"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="">Pilih Tipe Template</option>
+                        {% for value, label in type_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="message_content" class="block text-sm font-medium text-gray-700 mb-2">
+                        Isi Pesan <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                        id="message_content"
+                        name="message_content"
+                        rows="6"
+                        placeholder="Masukkan isi pesan template. Gunakan {nama}, {email}, dll untuk variable..."
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    ></textarea>
+                    <p class="mt-1 text-xs text-gray-500">Gunakan variable seperti {nama}, {email}, {tanggal}, dll</p>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="template_is_active"
+                            name="is_active"
+                            checked
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        >
+                        <label for="template_is_active" class="ml-2 block text-sm text-gray-700">
+                            Status Aktif
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="template_is_default"
+                            name="is_default"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        >
+                        <label for="template_is_default" class="ml-2 block text-sm text-gray-700">
+                            Template Default
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeTemplateModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentNumberId = null;
+let currentTemplateId = null;
+
+// Number Modal Functions
+function openNumberModal(numberId = null, button = null) {
+    currentNumberId = numberId;
+    const modal = document.getElementById('numberModal');
+    const form = document.getElementById('numberForm');
+    const title = document.getElementById('numberModalTitle');
+    
+    if (numberId && button) {
+        title.textContent = 'Edit Nomor WhatsApp';
+        document.getElementById('phone_number').value = button.getAttribute('data-phone') || '';
+        document.getElementById('number_name').value = button.getAttribute('data-name') || '';
+        document.getElementById('number_is_active').checked = button.getAttribute('data-active') === 'true';
+        const defaultCheckbox = document.getElementById('number_is_default');
+        if (defaultCheckbox) {
+            defaultCheckbox.checked = button.getAttribute('data-default') === 'true';
+        }
+    } else {
+        title.textContent = 'Tambah Nomor WhatsApp';
+        form.reset();
+        document.getElementById('number_is_active').checked = true;
+        document.getElementById('number_is_default').checked = false;
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeNumberModal() {
+    document.getElementById('numberModal').classList.add('hidden');
+    document.getElementById('numberForm').reset();
+    currentNumberId = null;
+}
+
+async function saveNumber(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('numberForm');
+    const formData = new FormData(form);
+    
+    const data = {};
+    formData.forEach((value, key) => {
+        if (key === 'is_active') {
+            data[key] = document.getElementById('number_is_active').checked ? 'on' : '';
+        } else if (key === 'is_default') {
+            const defaultCheckbox = document.getElementById('number_is_default');
+            data[key] = defaultCheckbox && defaultCheckbox.checked ? 'on' : '';
+        } else {
+            data[key] = value;
+        }
+    });
+    
+    showLoading(true);
+    
+    try {
+        const url = currentNumberId 
+            ? `/admin/whatsapp/numbers/manage/${currentNumberId}/`
+            : '/admin/whatsapp/numbers/manage/';
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: new URLSearchParams(data).toString()
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            showAlert('success', result.message);
+            closeNumberModal();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showAlert('error', result.message);
+        }
+    } catch (error) {
+        console.error('Save number error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Template Modal Functions
+function openTemplateModal(templateId = null, button = null) {
+    currentTemplateId = templateId;
+    const modal = document.getElementById('templateModal');
+    const form = document.getElementById('templateForm');
+    const title = document.getElementById('templateModalTitle');
+    
+    if (templateId && button) {
+        title.textContent = 'Edit Template WhatsApp';
+        document.getElementById('template_name').value = button.getAttribute('data-name') || '';
+        document.getElementById('template_type').value = button.getAttribute('data-type') || '';
+        document.getElementById('message_content').value = button.getAttribute('data-content') || '';
+        document.getElementById('template_is_active').checked = button.getAttribute('data-active') === 'true';
+        document.getElementById('template_is_default').checked = button.getAttribute('data-default') === 'true';
+    } else {
+        title.textContent = 'Tambah Template WhatsApp';
+        form.reset();
+        document.getElementById('template_is_active').checked = true;
+        document.getElementById('template_is_default').checked = false;
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeTemplateModal() {
+    document.getElementById('templateModal').classList.add('hidden');
+    document.getElementById('templateForm').reset();
+    currentTemplateId = null;
+}
+
+async function saveTemplate(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('templateForm');
+    const formData = new FormData(form);
+    
+    const data = {};
+    formData.forEach((value, key) => {
+        if (key === 'is_active') {
+            data[key] = document.getElementById('template_is_active').checked ? 'on' : '';
+        } else if (key === 'is_default') {
+            data[key] = document.getElementById('template_is_default').checked ? 'on' : '';
+        } else {
+            data[key] = value;
+        }
+    });
+    
+    showLoading(true);
+    
+    try {
+        const url = currentTemplateId 
+            ? `/admin/whatsapp/templates/manage/${currentTemplateId}/`
+            : '/admin/whatsapp/templates/manage/';
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: new URLSearchParams(data).toString()
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            showAlert('success', result.message);
+            closeTemplateModal();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showAlert('error', result.message);
+        }
+    } catch (error) {
+        console.error('Save template error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Delete Functions
+function showDeleteNumberModal(numberId, phoneNumber) {
+    const message = '<div class="text-sm text-gray-700 space-y-2">' +
+        '<p><strong>Hapus Nomor WhatsApp "' + phoneNumber + '"?</strong></p>' +
+        '<p class="text-xs text-red-600 font-medium mt-3">Aksi ini tidak dapat dibatalkan!</p>' +
+        '</div>';
+    
+    const deleteUrl = '/admin/whatsapp/numbers/delete/' + numberId + '/';
+    
+    if (typeof window.showDeleteModal === 'function') {
+        window.showDeleteModal(deleteUrl, message, function() {
+            window.location.reload();
+        });
+    } else {
+        if (confirm('Hapus nomor WhatsApp "' + phoneNumber + '"?\n\nAksi ini tidak dapat dibatalkan!')) {
+            window.location.href = deleteUrl;
+        }
+    }
+}
+
+function showDeleteTemplateModal(templateId, templateName) {
+    const message = '<div class="text-sm text-gray-700 space-y-2">' +
+        '<p><strong>Hapus Template "' + templateName + '"?</strong></p>' +
+        '<p class="text-xs text-red-600 font-medium mt-3">Aksi ini tidak dapat dibatalkan!</p>' +
+        '</div>';
+    
+    const deleteUrl = '/admin/whatsapp/templates/delete/' + templateId + '/';
+    
+    if (typeof window.showDeleteModal === 'function') {
+        window.showDeleteModal(deleteUrl, message, function() {
+            window.location.reload();
+        });
+    } else {
+        if (confirm('Hapus template "' + templateName + '"?\n\nAksi ini tidak dapat dibatalkan!')) {
+            window.location.href = deleteUrl;
+        }
+    }
+}
+
+// Close modals on outside click
+document.addEventListener('click', function(event) {
+    const numberModal = document.getElementById('numberModal');
+    const templateModal = document.getElementById('templateModal');
+    
+    if (event.target === numberModal) {
+        closeNumberModal();
+    }
+    if (event.target === templateModal) {
+        closeTemplateModal();
+    }
+});
+</script>
+{% endblock %}
+

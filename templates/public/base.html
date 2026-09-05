@@ -1,0 +1,445 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Invywed - Template Undangan Digital{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/media/logo/Logo Brand.png">
+    <link rel="apple-touch-icon" href="/media/logo/Logo Brand.png">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - AI/Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    {% block extra_head %}{% endblock %}
+    
+    <style>
+        /* CSS Variables for Theme */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border-color: #e5e7eb;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(147, 51, 234, 0.2);
+            --scrollbar-track: #f3f4f6;
+            --scrollbar-thumb: #9333EA;
+            --grid-opacity: 0.05;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0F0F0F;
+            --bg-secondary: #1A1A1A;
+            --bg-tertiary: #2A2A2A;
+            --text-primary: #ffffff;
+            --text-secondary: #d1d5db;
+            --text-tertiary: #9ca3af;
+            --border-color: #374151;
+            --glass-bg: rgba(15, 15, 15, 0.85);
+            --glass-border: rgba(147, 51, 234, 0.3);
+            --scrollbar-track: #0F0F0F;
+            --scrollbar-thumb: #9333EA;
+            --grid-opacity: 0.1;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--scrollbar-thumb) 0%, #6B21A8 100%);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #A855F7 0%, var(--scrollbar-thumb) 100%);
+        }
+        
+        /* Glassmorphism Effect */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+        
+        /* AI Grid Pattern Background */
+        .ai-grid {
+            background-image: 
+                linear-gradient(rgba(147, 51, 234, var(--grid-opacity)) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(147, 51, 234, var(--grid-opacity)) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        
+        /* Neon Text Effect */
+        .neon-text {
+            text-shadow: 
+                0 0 5px #9333EA,
+                0 0 10px #9333EA,
+                0 0 15px #9333EA,
+                0 0 20px #A855F7;
+        }
+        
+        /* Card Hover Effect */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(147, 51, 234, 0.3);
+        }
+        
+        /* Floating Button Animation */
+        .floating-btn {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* Theme Toggle Button */
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(147, 51, 234, 0.3);
+        }
+        
+        .theme-toggle i {
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 640px) {
+            body {
+                font-size: 14px;
+            }
+            .theme-toggle {
+                top: 0.75rem;
+                right: 0.75rem;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.25rem;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.2);
+            color: #000;
+        }
+    </style>
+</head>
+<body class="min-h-full font-sans theme-transition" style="background-color: var(--bg-primary); color: var(--text-primary);">
+    <!-- Theme Toggle Button -->
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+        <i id="themeIcon" class="fas fa-moon"></i>
+    </button>
+    
+    <!-- Background Pattern -->
+    <div class="fixed inset-0 ai-grid opacity-20 pointer-events-none" style="background-color: var(--bg-primary);"></div>
+    
+    <!-- Purple Gradient Overlay -->
+    <div class="fixed inset-0 pointer-events-none theme-gradient-overlay"></div>
+    
+    <!-- Main Content -->
+    <div class="relative min-h-screen">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Floating Action Buttons -->
+    <div class="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 flex flex-col gap-3">
+        <!-- WhatsApp Button -->
+        <button id="whatsappBtn" class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-full shadow-lg hover:shadow-green-500/50 flex items-center justify-center text-white text-xl transition-all duration-300 hover:scale-110 active:scale-95">
+            <i class="fab fa-whatsapp"></i>
+        </button>
+        <!-- Scroll to Top Button -->
+        <button id="floatingBtn" class="floating-btn w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full shadow-lg hover:shadow-purple-500/50 flex items-center justify-center text-white text-lg md:text-xl transition-all duration-300 hover:scale-110 active:scale-95">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+    </div>
+    
+    <!-- WhatsApp Modal -->
+    <div id="whatsappModal" class="modal-overlay">
+        <div class="modal-content relative max-w-2xl w-full mx-4 bg-white">
+            <button class="modal-close" onclick="closeWhatsAppModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+                    <i class="fab fa-whatsapp text-green-500 mr-2"></i>
+                    Hubungi Kami via WhatsApp
+                </h2>
+                
+                <!-- Templates Section -->
+                {% if whatsapp_templates %}
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Pilih Template Pesan</h3>
+                    <div class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        {% for template in whatsapp_templates %}
+                        <button class="template-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-all" 
+                                data-template-id="{{ template.id }}"
+                                data-template-content="{{ template.message_content|escapejs }}">
+                            <div class="font-semibold text-gray-900">{{ template.template_name }}</div>
+                            <div class="text-xs text-gray-500 mt-1">{{ template.get_template_type_display }}</div>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- FAQ Section -->
+                {% if faq_items %}
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Pertanyaan Umum</h3>
+                    <div class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        {% for faq in faq_items %}
+                        <div class="faq-item px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="font-semibold text-gray-900 mb-1">{{ faq.question }}</div>
+                            <div class="text-sm text-gray-600">{{ faq.answer|striptags|truncatewords:20 }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Custom Message Form -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Atau Tulis Pesan Sendiri</h3>
+                    <textarea id="customMessage" rows="4" placeholder="Tulis pesan Anda di sini..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"></textarea>
+                </div>
+                
+                <!-- Send Button -->
+                <button id="sendWhatsAppBtn" class="w-full px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>Kirim via WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script>
+        // Theme Management
+        (function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const html = document.documentElement;
+            
+            // Get saved theme or default to light
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const currentTheme = savedTheme === 'dark' ? 'dark' : 'light';
+            
+            // Apply theme
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    html.setAttribute('data-theme', 'dark');
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                    document.querySelector('.theme-gradient-overlay').style.background = 'radial-gradient(ellipse at top, rgba(107, 33, 168, 0.15) 0%, rgba(26, 26, 26, 0.05) 50%, transparent 100%)';
+                } else {
+                    html.removeAttribute('data-theme');
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                    document.querySelector('.theme-gradient-overlay').style.background = 'radial-gradient(ellipse at top, rgba(147, 51, 234, 0.05) 0%, rgba(255, 255, 255, 0.02) 50%, transparent 100%)';
+                }
+                localStorage.setItem('theme', theme);
+            }
+            
+            // Initialize theme
+            applyTheme(currentTheme);
+            
+            // Toggle theme
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = html.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                applyTheme(newTheme);
+            });
+        })();
+        
+        // Scroll to top functionality
+        document.getElementById('floatingBtn').addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // Show/hide floating button based on scroll position
+        window.addEventListener('scroll', function() {
+            const btn = document.getElementById('floatingBtn');
+            if (window.pageYOffset > 300) {
+                btn.style.display = 'flex';
+            } else {
+                btn.style.display = 'flex'; // Always show for mobile
+            }
+        });
+        
+        // WhatsApp Modal Functionality
+        const whatsappNumber = '{% if whatsapp_number %}{{ whatsapp_number.phone_number }}{% endif %}';
+        
+        function openWhatsAppModal() {
+            const modal = document.getElementById('whatsappModal');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeWhatsAppModal() {
+            const modal = document.getElementById('whatsappModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                // Reset form
+                document.getElementById('customMessage').value = '';
+            }
+        }
+        
+        // Open WhatsApp modal
+        document.getElementById('whatsappBtn').addEventListener('click', openWhatsAppModal);
+        
+        // Template button click
+        document.querySelectorAll('.template-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const content = this.getAttribute('data-template-content');
+                document.getElementById('customMessage').value = content;
+                // Highlight selected template
+                document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('bg-green-100', 'border-green-500'));
+                this.classList.add('bg-green-100', 'border-green-500');
+            });
+        });
+        
+        // Send WhatsApp message
+        document.getElementById('sendWhatsAppBtn').addEventListener('click', function() {
+            const message = document.getElementById('customMessage').value.trim();
+            if (!message) {
+                alert('Silakan pilih template atau tulis pesan terlebih dahulu');
+                return;
+            }
+            
+            if (!whatsappNumber) {
+                alert('Nomor WhatsApp tidak tersedia. Silakan hubungi admin.');
+                return;
+            }
+            
+            // Format nomor (hapus +, spasi, dan karakter non-digit)
+            const cleanNumber = whatsappNumber.replace(/[^\d]/g, '');
+            const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+            closeWhatsAppModal();
+        });
+        
+        // Close modal on overlay click
+        const whatsappModal = document.getElementById('whatsappModal');
+        if (whatsappModal) {
+            whatsappModal.addEventListener('click', function(e) {
+                if (e.target === whatsappModal) {
+                    closeWhatsAppModal();
+                }
+            });
+        }
+        
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeWhatsAppModal();
+            }
+        });
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

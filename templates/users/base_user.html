@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Invywed - Undangan Digital{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'fontawesomefree/css/all.min.css' %}">
+    
+    <!-- Custom Styles -->
+    <style>
+        /* Mobile: Bottom Navigation Bar - Fixed at bottom */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Desktop: Hide bottom nav */
+        @media (min-width: 1024px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+        
+        /* Desktop: Sidebar */
+        .sidebar {
+            display: none;
+        }
+        
+        @media (min-width: 1024px) {
+            .sidebar {
+                display: block;
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 240px;
+                background: white;
+                border-right: 1px solid #e5e7eb;
+                box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+                z-index: 40;
+                overflow-y: auto;
+            }
+            
+            .sidebar-content {
+                padding: 1rem 1.25rem;
+            }
+            
+            .main-content-wrapper {
+                margin-left: 240px;
+                min-height: 100vh;
+            }
+        }
+        
+        /* Mobile: Content padding to prevent overlap with bottom nav */
+        .main-content {
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
+        
+        @media (min-width: 1024px) {
+            .main-content {
+                padding-bottom: 0;
+            }
+        }
+        
+        /* Active menu indicator */
+        .nav-item.active {
+            color: #4f46e5;
+        }
+        
+        .nav-item.active .nav-icon {
+            color: #4f46e5;
+        }
+        
+        .nav-item:not(.active) {
+            color: #6b7280;
+        }
+        
+        .nav-item:not(.active) .nav-icon {
+            color: #6b7280;
+        }
+        
+        /* Sidebar menu items */
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 0.625rem 0.875rem;
+            margin-bottom: 0.375rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease-in-out;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .sidebar-item.active {
+            background-color: #eef2ff;
+            color: #4f46e5;
+        }
+        
+        .sidebar-item.active .nav-icon {
+            color: #4f46e5;
+        }
+        
+        /* Smooth transitions */
+        .nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        /* Safe area for iOS devices */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .bottom-nav {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            .main-content {
+                padding-bottom: calc(80px + env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* Responsive container */
+        .container-responsive {
+            width: 100%;
+            max-width: 100%;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        @media (min-width: 640px) {
+            .container-responsive {
+                max-width: 640px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .container-responsive {
+                max-width: 1200px;
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-content">
+            <!-- Logo/Brand -->
+            <div class="mb-8 pb-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-heart text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900">Invywed</h1>
+                        <p class="text-xs text-gray-500">Undangan Digital</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <nav class="space-y-0.5">
+                <!-- Home -->
+                <a href="{% url 'users:dashboard' %}" class="sidebar-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="nav-icon fas fa-home text-base mr-2.5 w-4 text-center"></i>
+                    <span class="font-medium">Home</span>
+                </a>
+                
+                <!-- Data -->
+                <a href="{% url 'users:wedding_data_form' %}" class="sidebar-item {% if request.resolver_match.url_name == 'wedding_data_form' or request.resolver_match.url_name == 'wedding_data_view' %}active{% endif %}">
+                    <i class="nav-icon fas fa-edit text-base mr-2.5 w-4 text-center"></i>
+                    <span class="font-medium">Data</span>
+                </a>
+                
+                <!-- Tamu -->
+                <a href="{% url 'users:guest_manager' %}" class="sidebar-item {% if request.resolver_match.url_name == 'guest_manager' %}active{% endif %}">
+                    <i class="nav-icon fas fa-users text-base mr-2.5 w-4 text-center"></i>
+                    <span class="font-medium">Tamu</span>
+                </a>
+                
+                <!-- Ucapan -->
+                <a href="{% url 'users:rsvp_feed' %}" class="sidebar-item {% if request.resolver_match.url_name == 'rsvp_feed' %}active{% endif %}">
+                    <i class="nav-icon fas fa-heart text-base mr-2.5 w-4 text-center"></i>
+                    <span class="font-medium">Ucapan</span>
+                </a>
+                
+                <!-- Akun -->
+                <a href="{% url 'users:profile' %}" class="sidebar-item {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'select_theme' %}active{% endif %}">
+                    <i class="nav-icon fas fa-user text-base mr-2.5 w-4 text-center"></i>
+                    <span class="font-medium">Akun</span>
+                </a>
+            </nav>
+            
+            <!-- User Info (Desktop) -->
+            <div class="mt-6 pt-4 border-t border-gray-200">
+                <div class="flex items-center space-x-2.5">
+                    {% if user.clientprofile.profile_photo %}
+                        <img src="{{ user.clientprofile.profile_photo.url }}" alt="Profile" class="w-9 h-9 rounded-full object-cover">
+                    {% else %}
+                        <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <i class="fas fa-user text-indigo-600 text-sm"></i>
+                        </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-medium text-gray-900 truncate">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Main Content Wrapper -->
+    <div class="main-content-wrapper">
+        <!-- Main Content Area -->
+        <div class="main-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <div class="grid grid-cols-5 gap-1 px-2 py-2">
+            <!-- Home -->
+            <a href="{% url 'users:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %} flex flex-col items-center justify-center py-2 px-1">
+                <i class="nav-icon fas fa-home text-xl mb-1"></i>
+                <span class="text-xs font-medium">Home</span>
+            </a>
+            
+            <!-- Data -->
+            <a href="{% url 'users:wedding_data_form' %}" class="nav-item {% if request.resolver_match.url_name == 'wedding_data_form' or request.resolver_match.url_name == 'wedding_data_view' %}active{% endif %} flex flex-col items-center justify-center py-2 px-1">
+                <i class="nav-icon fas fa-edit text-xl mb-1"></i>
+                <span class="text-xs font-medium">Data</span>
+            </a>
+            
+            <!-- Tamu -->
+            <a href="{% url 'users:guest_manager' %}" class="nav-item {% if request.resolver_match.url_name == 'guest_manager' %}active{% endif %} flex flex-col items-center justify-center py-2 px-1">
+                <i class="nav-icon fas fa-users text-xl mb-1"></i>
+                <span class="text-xs font-medium">Tamu</span>
+            </a>
+            
+            <!-- Ucapan -->
+            <a href="{% url 'users:rsvp_feed' %}" class="nav-item {% if request.resolver_match.url_name == 'rsvp_feed' %}active{% endif %} flex flex-col items-center justify-center py-2 px-1">
+                <i class="nav-icon fas fa-heart text-xl mb-1"></i>
+                <span class="text-xs font-medium">Ucapan</span>
+            </a>
+            
+            <!-- Akun -->
+            <a href="{% url 'users:profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'select_theme' %}active{% endif %} flex flex-col items-center justify-center py-2 px-1">
+                <i class="nav-icon fas fa-user text-xl mb-1"></i>
+                <span class="text-xs font-medium">Akun</span>
+            </a>
+        </div>
+    </nav>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

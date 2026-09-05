@@ -1,0 +1,256 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ page_title }} - Invywed Admin{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_subtitle %}Complete guest information and activity{% endblock %}
+
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Guest Information -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-user mr-2"></i>Guest Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Full Name</p>
+                    <p class="text-base font-medium text-gray-900">{{ guest.full_name }}</p>
+                </div>
+                {% if guest.nickname %}
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Nickname</p>
+                    <p class="text-base font-medium text-gray-900">{{ guest.nickname }}</p>
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Client</p>
+                    <p class="text-base font-medium text-gray-900">{{ guest.client.user.username }}</p>
+                </div>
+                {% if guest.guest_group %}
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Group</p>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        {{ guest.guest_group.group_name }}
+                    </span>
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Phone</p>
+                    <p class="text-base text-gray-900">{{ guest.phone_number|default:"-" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">WhatsApp</p>
+                    <p class="text-base text-gray-900">{{ guest.whatsapp_number|default:"-" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Email</p>
+                    <p class="text-base text-gray-900">{{ guest.email|default:"-" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Companions</p>
+                    <p class="text-base text-gray-900">{{ guest.companion_count }}</p>
+                </div>
+                {% if guest.address %}
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-500 mb-1">Address</p>
+                    <p class="text-base text-gray-900">{{ guest.address }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Invitation Code -->
+        {% if invitation_code %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-qrcode mr-2"></i>Invitation Code
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Unique Code</p>
+                    <p class="text-base font-mono font-medium text-gray-900">{{ invitation_code.unique_code }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Scan Count</p>
+                    <p class="text-base text-gray-900">{{ invitation_code.scan_count }}</p>
+                </div>
+                {% if invitation_code.qr_code_image %}
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-500 mb-2">QR Code</p>
+                    <img src="{{ invitation_code.qr_code_image.url }}" alt="QR Code" class="w-32 h-32 border border-gray-200 rounded-lg">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- RSVP Response -->
+        {% if rsvp %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-check-circle mr-2"></i>RSVP Response
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Status</p>
+                    <span class="px-3 py-1 text-sm font-medium rounded-full
+                        {% if rsvp.attendance_status == 'attending' %}bg-green-100 text-green-800
+                        {% elif rsvp.attendance_status == 'maybe' %}bg-yellow-100 text-yellow-800
+                        {% elif rsvp.attendance_status == 'not_attending' %}bg-red-100 text-red-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ rsvp.get_attendance_status_display }}
+                    </span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Event</p>
+                    <p class="text-base text-gray-900">{{ rsvp.get_attending_event_display|default:"-" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Companions</p>
+                    <p class="text-base text-gray-900">{{ rsvp.companion_count }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Response Date</p>
+                    <p class="text-base text-gray-900">{{ rsvp.response_date|date:"d M Y, H:i" }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Guest Wishes -->
+        {% if wishes %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-heart mr-2"></i>Guest Wishes ({{ wishes|length }})
+            </h3>
+            <div class="space-y-4">
+                {% for wish in wishes %}
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-start justify-between mb-2">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            {{ wish.get_wish_type_display }}
+                        </span>
+                        <span class="text-xs text-gray-500">{{ wish.submitted_at|date:"d M Y, H:i" }}</span>
+                    </div>
+                    <p class="text-gray-700 whitespace-pre-wrap">{{ wish.wish_content }}</p>
+                    {% if wish.likes_count > 0 %}
+                        <div class="mt-2 text-sm text-gray-500">
+                            <i class="fas fa-heart text-red-500 mr-1"></i>{{ wish.likes_count }} likes
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Check-In Logs -->
+        {% if check_ins %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-sign-in-alt mr-2"></i>Check-In History ({{ check_ins|length }})
+            </h3>
+            <div class="space-y-3">
+                {% for checkin in check_ins %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ checkin.get_event_type_display }}</p>
+                        <p class="text-xs text-gray-500">{{ checkin.check_in_time|date:"d M Y, H:i" }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-900">{{ checkin.companion_actual }} companions</p>
+                        {% if checkin.is_late %}
+                            <span class="text-xs text-red-600">Late</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Profile Photo -->
+        {% if guest.profile_photo %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Profile Photo</h3>
+            <img src="{{ guest.profile_photo.url }}" alt="{{ guest.full_name }}" class="w-full rounded-lg">
+        </div>
+        {% endif %}
+
+        <!-- Statistics -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Statistics</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Wishes</span>
+                    <span class="text-sm font-medium text-gray-900">{{ wishes|length }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Check-Ins</span>
+                    <span class="text-sm font-medium text-gray-900">{{ check_ins|length }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Souvenirs</span>
+                    <span class="text-sm font-medium text-gray-900">{{ souvenirs|length }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Digital Envelope -->
+        {% if envelope %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-envelope mr-2"></i>Digital Envelope
+            </h3>
+            <div class="space-y-2">
+                <div>
+                    <p class="text-xs text-gray-500">Type</p>
+                    <p class="text-sm font-medium text-gray-900">{{ envelope.get_envelope_type_display }}</p>
+                </div>
+                {% if envelope.amount %}
+                    <div>
+                        <p class="text-xs text-gray-500">Amount</p>
+                        <p class="text-lg font-bold text-green-600">Rp {{ envelope.amount|floatformat:0 }}</p>
+                    </div>
+                {% endif %}
+                <div>
+                    <p class="text-xs text-gray-500">Received At</p>
+                    <p class="text-sm text-gray-900">{{ envelope.received_at|date:"d M Y, H:i" }}</p>
+                </div>
+                {% if envelope.is_verified %}
+                    <span class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        Verified
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Guest Feedback -->
+        {% if feedback %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-comment-dots mr-2"></i>Feedback
+            </h3>
+            <div class="flex items-center mb-2">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= feedback.rating %}
+                        <i class="fas fa-star text-yellow-400"></i>
+                    {% else %}
+                        <i class="far fa-star text-gray-300"></i>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <p class="text-sm text-gray-700">{{ feedback.feedback_text|truncatewords:30 }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,232 @@
+{% extends 'users/base_user.html' %}
+{% load static %}
+
+{% block title %}Profil & Pengaturan - Invywed{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 lg:px-6 lg:py-3 sticky top-0 z-20 shadow-sm">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            {% if client_profile.profile_photo %}
+                <img src="{{ client_profile.profile_photo.url }}" alt="Profile" class="w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-white shadow-lg object-cover">
+            {% else %}
+                <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-white/20 flex items-center justify-center border-2 border-white shadow-lg">
+                    <i class="fas fa-user text-sm lg:text-base text-white"></i>
+                </div>
+            {% endif %}
+            <div>
+                <h1 class="text-sm lg:text-base font-bold">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="text-indigo-100 text-xs mt-0.5">{{ user.email }}</p>
+            </div>
+        </div>
+        <span class="inline-block px-2.5 py-1 bg-white/20 rounded-full text-xs font-medium">
+            {{ client_profile.get_subscription_type_display }}
+        </span>
+    </div>
+</div>
+
+<!-- Profile Info -->
+<div class="container-responsive py-4 lg:py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4">
+            <i class="fas fa-user-circle mr-2 text-indigo-600"></i>Informasi Profil
+        </h3>
+        
+        <div class="space-y-3 lg:space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor HP</label>
+                <input type="tel" value="{{ client_profile.phone_number|default:'-' }}" readonly
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor WhatsApp</label>
+                <input type="tel" value="{{ client_profile.whatsapp_number|default:'-' }}" readonly
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
+                <textarea readonly rows="3"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">{{ client_profile.address|default:'-' }}</textarea>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kota</label>
+                <input type="text" value="{{ client_profile.city|default:'-' }}" readonly
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Theme Selection -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <div class="flex items-center justify-between mb-3 lg:mb-4">
+            <h3 class="text-sm lg:text-base font-semibold text-gray-900">
+                <i class="fas fa-palette mr-2 text-indigo-600"></i>Template Undangan
+            </h3>
+            <a href="{% url 'users:select_theme' %}" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                <i class="fas fa-edit mr-1"></i>Ubah
+            </a>
+        </div>
+        
+        {% if selected_theme %}
+        <!-- Selected Theme Display -->
+        <div class="border-2 border-indigo-600 rounded-lg overflow-hidden mb-4">
+            {% if selected_theme.thumbnail %}
+                <img src="{{ selected_theme.thumbnail.url }}" alt="{{ selected_theme.name }}" class="w-full h-40 object-cover">
+            {% else %}
+                <div class="w-full h-40 bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-image text-4xl text-gray-400"></i>
+                </div>
+            {% endif %}
+            <div class="p-4 bg-indigo-50">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <h4 class="font-semibold text-base text-gray-900">{{ selected_theme.name }}</h4>
+                        <p class="text-xs text-gray-600 mt-1">{{ selected_theme.category.name }}</p>
+                    </div>
+                    <span class="inline-block px-3 py-1 bg-indigo-600 text-white text-xs rounded-full font-medium">
+                        <i class="fas fa-check mr-1"></i>Tema Aktif
+                    </span>
+                </div>
+                {% if selected_theme.description %}
+                <p class="text-xs text-gray-600 mt-2 line-clamp-2">{{ selected_theme.description|striptags|truncatewords:20 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- No Theme Selected -->
+        <div class="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+            <i class="fas fa-palette text-4xl text-gray-300 mb-3"></i>
+            <p class="text-sm text-gray-500 mb-4">Belum ada template yang dipilih</p>
+            <a href="{% url 'users:select_theme' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>Pilih Template
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Quick Theme Selection (Optional - Show other themes) -->
+        {% if themes and selected_theme %}
+        <div class="mt-4">
+            <p class="text-xs font-medium text-gray-700 mb-2">Template Lainnya</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {% for theme in themes|slice:":4" %}
+                    {% if theme.id != selected_theme.id %}
+                    <div class="border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-indigo-500 transition-colors" onclick="window.location.href='{% url 'users:select_theme' %}'">
+                        {% if theme.thumbnail %}
+                            <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="w-full h-20 object-cover">
+                        {% else %}
+                            <div class="w-full h-20 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400"></i>
+                            </div>
+                        {% endif %}
+                        <div class="p-2">
+                            <p class="text-xs font-medium text-gray-900 truncate">{{ theme.name }}</p>
+                            <p class="text-xs text-gray-500">{{ theme.category.name }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% if themes|length > 5 %}
+            <a href="{% url 'users:select_theme' %}" class="block text-center text-xs text-indigo-600 hover:text-indigo-700 mt-2">
+                Lihat Semua Template <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    </div>
+    
+    <!-- Settings & Logout -->
+    <div class="lg:col-span-2">
+    <!-- Settings Card -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4 mb-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4">
+            <i class="fas fa-cog mr-2 text-indigo-600"></i>Pengaturan
+        </h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <a href="{% url 'users:change_password' %}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-key text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-900 block">Ubah Password</span>
+                        <span class="text-xs text-gray-500">Ganti kata sandi</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+            </a>
+            
+            <a href="{% url 'users:notifications' %}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-bell text-green-600"></i>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-900 block">Notifikasi</span>
+                        <span class="text-xs text-gray-500">Pengaturan notif</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+            </a>
+            
+            <a href="{% url 'users:help' %}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-question-circle text-blue-600"></i>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-900 block">Bantuan</span>
+                        <span class="text-xs text-gray-500">FAQ & support</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Logout -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <a href="{% url 'users:logout' %}" class="block w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 lg:py-3 px-4 rounded-lg transition-colors duration-200 text-center text-sm">
+            <i class="fas fa-sign-out-alt mr-2"></i>Keluar
+        </a>
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectTheme(themeId) {
+        if (confirm('Apakah Anda yakin ingin mengubah tema undangan?')) {
+            // AJAX request to change theme
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/users/profile/select-theme/`;
+            
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            const themeInput = document.createElement('input');
+            themeInput.type = 'hidden';
+            themeInput.name = 'theme_id';
+            themeInput.value = themeId;
+            form.appendChild(themeInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}
+

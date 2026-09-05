@@ -1,0 +1,543 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Informasi Dasar -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Informasi Dasar</h3>
+            
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Nama Tema <span class="text-red-500">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Slug
+                </label>
+                {{ form.slug }}
+                <p class="mt-1 text-xs text-gray-500">Akan otomatis di-generate dari nama jika kosong</p>
+                {% if form.slug.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.slug.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Deskripsi
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Kategori
+                    </label>
+                    <button type="button" onclick="openCategoryModal()" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                        <i class="fas fa-plus"></i>
+                        <span>Buat Kategori Baru</span>
+                    </button>
+                </div>
+                {{ form.category }}
+                {% if form.category.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                {% endif %}
+                <div class="mt-2">
+                    <button type="button" onclick="openCategoryListModal()" class="text-xs text-gray-600 hover:text-gray-700 font-medium flex items-center gap-1">
+                        <i class="fas fa-list"></i>
+                        <span>Kelola Kategori</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- File Uploads -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">File Uploads</h3>
+            
+            <div>
+                <label for="{{ form.zip_file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    File ZIP Template <span class="text-red-500">{% if not theme %}*{% endif %}</span>
+                </label>
+                {{ form.zip_file }}
+                <p class="mt-1 text-xs text-gray-500">
+                    Upload file ZIP yang berisi HTML, CSS, JS template. Harus ada file index.html, main.html, atau template.html
+                </p>
+                {% if theme and theme.zip_file %}
+                    <p class="mt-1 text-xs text-blue-600">
+                        File saat ini: <a href="{{ theme.zip_file.url }}" target="_blank" class="underline">{{ theme.zip_file.name }}</a>
+                    </p>
+                {% endif %}
+                {% if form.zip_file.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.zip_file.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="{{ form.thumbnail.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Thumbnail
+                </label>
+                {{ form.thumbnail }}
+                {% if theme and theme.thumbnail %}
+                    <div class="mt-2">
+                        <img src="{{ theme.thumbnail.url }}" alt="Thumbnail" class="w-32 h-32 object-cover rounded-lg border border-gray-200">
+                    </div>
+                {% endif %}
+                {% if form.thumbnail.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.thumbnail.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Metadata -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Metadata</h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.difficulty_level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tingkat Kesulitan
+                    </label>
+                    {{ form.difficulty_level }}
+                    {% if form.difficulty_level.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.difficulty_level.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Harga
+                    </label>
+                    {{ form.price }}
+                    {% if form.price.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center">
+                    {{ form.is_premium }}
+                    <label for="{{ form.is_premium.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                        Premium
+                    </label>
+                </div>
+                
+                <div class="flex items-center">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                        Aktif
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+            <a href="{% url 'admin_panel:theme_list' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+                Batal
+            </a>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fas fa-save mr-2"></i>Simpan
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Category List Modal -->
+<div id="categoryListModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Kelola Kategori</h3>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="openCategoryModal()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium flex items-center gap-1">
+                        <i class="fas fa-plus"></i>
+                        <span>Tambah Baru</span>
+                    </button>
+                    <button type="button" onclick="closeCategoryListModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="categoryListContainer" class="space-y-2">
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p>Memuat kategori...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Modal -->
+<div id="categoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900" id="categoryModalTitle">Buat Kategori Baru</h3>
+                <button type="button" onclick="closeCategoryModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="categoryForm" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="categoryId" name="category_id">
+                
+                <div>
+                    <label for="categoryName" class="block text-sm font-medium text-gray-700 mb-1">
+                        Nama Kategori <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="categoryName" name="name" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Masukkan nama kategori">
+                    <p class="mt-1 text-xs text-gray-500">Nama kategori akan digunakan untuk mengelompokkan tema</p>
+                </div>
+                
+                <div id="categoryFormErrors" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg"></div>
+                
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeCategoryModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fas fa-save mr-2"></i>Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCategoryId = null;
+
+function openCategoryListModal() {
+    const modal = document.getElementById('categoryListModal');
+    modal.classList.remove('hidden');
+    loadCategoryList();
+}
+
+function closeCategoryListModal() {
+    const modal = document.getElementById('categoryListModal');
+    modal.classList.add('hidden');
+}
+
+async function loadCategoryList() {
+    const container = document.getElementById('categoryListContainer');
+    
+    try {
+        const response = await fetch('/admin/thema/category/list/?include_inactive=true');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            if (data.categories.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-folder-open text-3xl mb-2"></i>
+                        <p>Belum ada kategori</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div class="space-y-2">';
+            data.categories.forEach(cat => {
+                const nameEscaped = cat.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const slugEscaped = cat.slug.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const statusBadge = cat.is_active 
+                    ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Aktif</span>'
+                    : '<span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">Nonaktif</span>';
+                
+                html += `
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-medium text-gray-900">${nameEscaped}</h4>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-xs text-gray-500">${slugEscaped}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editCategory(${cat.id}, '${nameEscaped}', '${slugEscaped}')" 
+                                    class="text-indigo-600 hover:text-indigo-700 p-2 rounded hover:bg-indigo-50" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCategory(${cat.id}, '${nameEscaped}')" 
+                                    class="text-red-600 hover:text-red-700 p-2 rounded hover:bg-red-50" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-8 text-red-500">
+                    <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
+                    <p>Error: ${data.message || 'Gagal memuat kategori'}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
+                <p>Error: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+async function editCategory(categoryId, name, slug) {
+    // Load category data
+    try {
+        const response = await fetch(`/admin/thema/category/get/${categoryId}/`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const category = data.category;
+            currentCategoryId = category.id;
+            document.getElementById('categoryId').value = category.id;
+            document.getElementById('categoryName').value = category.name;
+            
+            // Update modal title
+            document.getElementById('categoryModalTitle').textContent = 'Edit Kategori';
+            
+            closeCategoryListModal();
+            openCategoryModal(categoryId);
+        } else {
+            alert('Error: ' + (data.message || 'Gagal memuat kategori'));
+        }
+    } catch (error) {
+        alert('Error loading category: ' + error.message);
+    }
+}
+
+async function deleteCategory(categoryId, categoryName) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus kategori "${categoryName}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/thema/category/delete/${categoryId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert(data.message);
+            loadCategoryList();
+            reloadCategoryDropdown();
+        } else {
+            alert(data.message || 'Gagal menghapus kategori');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function openCategoryModal(categoryId = null) {
+    const modal = document.getElementById('categoryModal');
+    const form = document.getElementById('categoryForm');
+    const title = document.getElementById('categoryModalTitle');
+    const errorsDiv = document.getElementById('categoryFormErrors');
+    
+    // If categoryId is provided but not loaded yet, load it
+    if (categoryId && !currentCategoryId) {
+        editCategory(categoryId, '', '');
+        return;
+    }
+    
+    // Reset form if creating new
+    if (!categoryId) {
+        currentCategoryId = null;
+        form.reset();
+        document.getElementById('categoryId').value = '';
+        title.textContent = 'Buat Kategori Baru';
+    } else {
+        title.textContent = 'Edit Kategori';
+    }
+    
+    errorsDiv.classList.add('hidden');
+    errorsDiv.innerHTML = '';
+    modal.classList.remove('hidden');
+}
+
+function closeCategoryModal() {
+    const modal = document.getElementById('categoryModal');
+    modal.classList.add('hidden');
+    currentCategoryId = null;
+    
+    // Reset form
+    const form = document.getElementById('categoryForm');
+    form.reset();
+    document.getElementById('categoryId').value = '';
+    document.getElementById('categoryFormErrors').classList.add('hidden');
+    document.getElementById('categoryModalTitle').textContent = 'Buat Kategori Baru';
+}
+
+// Slug akan auto-generate di backend
+
+// Handle form submission
+document.getElementById('categoryForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    const errorsDiv = document.getElementById('categoryFormErrors');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+    errorsDiv.classList.add('hidden');
+    
+    try {
+        const categoryId = document.getElementById('categoryId').value;
+        const url = categoryId 
+            ? `/admin/thema/category/update/${categoryId}/`
+            : '/admin/thema/category/create/';
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Show success message
+            alert(data.message);
+            
+            // Reload category dropdown
+            await reloadCategoryDropdown(data.category);
+            
+            // Reload category list if modal is open
+            if (!document.getElementById('categoryListModal').classList.contains('hidden')) {
+                loadCategoryList();
+            }
+            
+            // Close modal
+            closeCategoryModal();
+        } else {
+            // Show errors
+            let errorHtml = '<strong>Error:</strong><ul class="list-disc list-inside mt-2">';
+            if (data.errors) {
+                for (const field in data.errors) {
+                    data.errors[field].forEach(error => {
+                        errorHtml += `<li>${field}: ${error}</li>`;
+                    });
+                }
+            } else {
+                errorHtml += `<li>${data.message || 'Terjadi kesalahan'}</li>`;
+            }
+            errorHtml += '</ul>';
+            errorsDiv.innerHTML = errorHtml;
+            errorsDiv.classList.remove('hidden');
+        }
+    } catch (error) {
+        errorsDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+        errorsDiv.classList.remove('hidden');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+});
+
+// Reload category dropdown
+async function reloadCategoryDropdown(newCategory = null) {
+    try {
+        const response = await fetch('/admin/thema/category/list/');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+            const currentValue = categorySelect.value;
+            
+            // Clear and repopulate
+            categorySelect.innerHTML = '<option value="">Pilih Kategori</option>';
+            data.categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.name;
+                if (newCategory && cat.id === newCategory.id) {
+                    option.selected = true;
+                } else if (cat.id == currentValue) {
+                    option.selected = true;
+                }
+                categorySelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error reloading categories:', error);
+    }
+}
+
+// Close modal on outside click
+document.getElementById('categoryModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCategoryModal();
+    }
+});
+
+document.getElementById('categoryListModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCategoryListModal();
+    }
+});
+
+// Load categories on page load
+document.addEventListener('DOMContentLoaded', function() {
+    reloadCategoryDropdown();
+});
+</script>
+{% endblock %}
+

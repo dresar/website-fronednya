@@ -1,0 +1,466 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ client.user.get_full_name|default:client.user.username }} - User Details{% endblock %}
+{% block page_title %}User Details{% endblock %}
+{% block page_subtitle %}{{ client.user.get_full_name|default:client.user.username }} • {{ client.get_subscription_type_display }}{% endblock %}
+
+
+{% block content %}
+<!-- User Header Info -->
+<div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+    <div class="p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <!-- Profile Photo -->
+            <div class="flex-shrink-0">
+                {% if client.profile_photo %}
+                    <img class="h-20 w-20 rounded-full object-cover border-4 border-gray-200" src="{{ client.profile_photo.url }}" alt="{{ client.user.username }}">
+                {% else %}
+                    <div class="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center border-4 border-gray-200">
+                        <i class="fas fa-user text-gray-600 text-2xl"></i>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Basic Info -->
+            <div class="flex-1 min-w-0">
+                <h2 class="text-2xl font-bold text-gray-900">{{ client.user.get_full_name|default:client.user.username }}</h2>
+                <p class="text-lg text-gray-600">@{{ client.user.username }}</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                        {% if client.subscription_type == 'free' %}bg-gray-100 text-gray-800
+                        {% elif client.subscription_type == 'premium' %}bg-blue-100 text-blue-800
+                        {% elif client.subscription_type == 'gold' %}bg-yellow-100 text-yellow-800
+                        {% elif client.subscription_type == 'platinum' %}bg-purple-100 text-purple-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ client.get_subscription_type_display }}
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if client.user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if client.user.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="flex-shrink-0">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600">{{ transactions.count|default:0 }}</div>
+                        <div class="text-sm text-gray-600">Transactions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2 Column Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Main Info -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Contact Information -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-address-card mr-2"></i>
+                    Contact Information
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Email</label>
+                        <p class="text-sm text-gray-900 mt-1">{{ client.user.email|default:'-' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Phone</label>
+                        <p class="text-sm text-gray-900 mt-1">{{ client.phone_number|default:'-' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">WhatsApp</label>
+                        <p class="text-sm text-gray-900 mt-1">{{ client.whatsapp_number|default:'-' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">City</label>
+                        <p class="text-sm text-gray-900 mt-1">{{ client.city|default:'-' }}</p>
+                    </div>
+                </div>
+                {% if client.address %}
+                <div class="mt-6">
+                    <label class="text-sm font-medium text-gray-500">Address</label>
+                    <p class="text-sm text-gray-900 mt-1">{{ client.address }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Wedding Information -->
+        {% if groom_info or bride_info %}
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-heart mr-2"></i>
+                    Wedding Information
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Groom Info -->
+                    {% if groom_info %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-male text-blue-600 mr-2"></i>
+                            Mempelai Pria
+                        </h4>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="text-gray-600">Full Name:</span>
+                                <span class="font-medium ml-2">{{ groom_info.full_name }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Nickname:</span>
+                                <span class="font-medium ml-2">{{ groom_info.nickname }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Occupation:</span>
+                                <span class="font-medium ml-2">{{ groom_info.occupation|default:'-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Bride Info -->
+                    {% if bride_info %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-female text-pink-600 mr-2"></i>
+                            Mempelai Wanita
+                        </h4>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="text-gray-600">Full Name:</span>
+                                <span class="font-medium ml-2">{{ bride_info.full_name }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Nickname:</span>
+                                <span class="font-medium ml-2">{{ bride_info.nickname }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Occupation:</span>
+                                <span class="font-medium ml-2">{{ bride_info.occupation|default:'-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Guest Statistics -->
+                {% if guest_stats %}
+                <div class="mt-6 grid grid-cols-3 gap-4">
+                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600">{{ guest_stats.total_guests }}</div>
+                        <div class="text-sm text-blue-700">Total Guests</div>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600">{{ guest_stats.confirmed_guests }}</div>
+                        <div class="text-sm text-green-700">Confirmed</div>
+                    </div>
+                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                        <div class="text-2xl font-bold text-yellow-600">{{ guest_stats.pending_guests }}</div>
+                        <div class="text-sm text-yellow-700">Pending</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Transactions -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-credit-card mr-2"></i>
+                        Recent Transactions
+                    </h3>
+                    <!-- Transaction list removed - Financial features disabled -->
+                    <!-- <a href="{% url 'admin_panel:transaction_list' %}?search={{ client.user.username }}" class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">
+                        View all <i class="fas fa-arrow-right ml-1"></i>
+                    </a> -->
+                </div>
+            </div>
+            <div class="p-6">
+                {% if transactions %}
+                    <div class="space-y-4">
+                        {% for transaction in transactions %}
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        {% if transaction.status == 'paid' %}
+                                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-check text-green-600 text-sm"></i>
+                                            </div>
+                                        {% elif transaction.status == 'pending' %}
+                                            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-clock text-yellow-600 text-sm"></i>
+                                            </div>
+                                        {% else %}
+                                            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-times text-red-600 text-sm"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ transaction.transaction_id }}</p>
+                                        <p class="text-xs text-gray-500">{{ transaction.created_at|date:"d M Y, H:i" }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-bold text-gray-900">Rp {{ transaction.net_amount|floatformat:0 }}</p>
+                                    <p class="text-xs {% if transaction.status == 'paid' %}text-green-600{% elif transaction.status == 'pending' %}text-yellow-600{% else %}text-red-600{% endif %} font-medium">
+                                        {{ transaction.get_status_display }}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-credit-card text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No transactions found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Additional Info -->
+    <div class="space-y-6">
+        <!-- Account Summary -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-user-cog mr-2"></i>
+                    Account Summary
+                </h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">User ID:</span>
+                    <span class="text-sm font-medium text-gray-900">#{{ client.user.id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Subscription:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ client.get_subscription_type_display }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Account Level:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ client.get_account_level_display }}</span>
+                </div>
+                {% if client.subscription_expires %}
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Expires:</span>
+                    <span class="text-sm font-medium {% if client.subscription_expires|date:'U' < today|date:'U' %}text-red-600{% else %}text-gray-900{% endif %}">
+                        {{ client.subscription_expires|date:"d M Y" }}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Joined:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ client.created_at|date:"d M Y" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Last Active:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ client.user.last_login|date:"d M Y"|default:'-' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Actions -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-tools mr-2"></i>
+                    Account Actions
+                </h3>
+            </div>
+            <div class="p-6 space-y-3">
+                <button onclick="resetPassword()" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-key mr-2"></i>
+                    Reset Password
+                </button>
+                <button onclick="sendNotification()" class="w-full bg-green-50 hover:bg-green-100 text-green-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-envelope mr-2"></i>
+                    Send Notification
+                </button>
+                <button onclick="viewLoginHistory()" class="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-history mr-2"></i>
+                    Login History
+                </button>
+            </div>
+        </div>
+
+        <!-- Support Tickets - REMOVED -->
+
+        <!-- Activity Log -->
+        {% if activities %}
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-list-alt mr-2"></i>
+                    Recent Activities
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-3">
+                    {% for activity in activities %}
+                        <div class="flex items-center space-x-3 p-2">
+                            <div class="flex-shrink-0">
+                                {% if activity.action_type == 'create' %}
+                                    <i class="fas fa-plus text-green-600 text-sm"></i>
+                                {% elif activity.action_type == 'update' %}
+                                    <i class="fas fa-edit text-blue-600 text-sm"></i>
+                                {% elif activity.action_type == 'delete' %}
+                                    <i class="fas fa-trash text-red-600 text-sm"></i>
+                                {% else %}
+                                    <i class="fas fa-eye text-gray-600 text-sm"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900 truncate">{{ activity.action_description }}</p>
+                                <p class="text-xs text-gray-500">{{ activity.timestamp|timesince }} ago</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Quick Info -->
+    <div class="space-y-6">
+        <!-- Quick Stats -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-chart-pie mr-2"></i>
+                    Quick Stats
+                </h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="text-center p-4 bg-indigo-50 rounded-lg">
+                    <div class="text-2xl font-bold text-indigo-600">{{ transactions.count|default:0 }}</div>
+                    <div class="text-sm text-indigo-700">Total Transactions</div>
+                </div>
+                
+                
+                {% if guest_stats %}
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-600">{{ guest_stats.total_guests }}</div>
+                    <div class="text-sm text-purple-700">Total Guests</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Subscription Details -->
+        {% if client.subscription_type != 'free' %}
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-star mr-2"></i>
+                    Subscription Details
+                </h3>
+            </div>
+            <div class="p-6 space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Plan:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ client.get_subscription_type_display }}</span>
+                </div>
+                {% if client.subscription_expires %}
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Expires:</span>
+                    <span class="text-sm font-medium {% if client.subscription_expires|date:'U' < today|date:'U' %}text-red-600{% else %}text-green-600{% endif %}">
+                        {{ client.subscription_expires|date:"d M Y" }}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <button onclick="extendSubscription()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200">
+                        <i class="fas fa-calendar-plus mr-2"></i>
+                        Extend Subscription
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Account Notes -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-sticky-note mr-2"></i>
+                    Admin Notes
+                </h3>
+            </div>
+            <div class="p-6">
+                <textarea 
+                    placeholder="Add notes about this user..."
+                    class="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                ></textarea>
+                <button class="mt-3 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Notes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+async function toggleUserStatus(userId, newStatus) {
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`/admin/users/${userId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showAlert('success', data.message);
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showAlert('error', data.message);
+        }
+        
+    } catch (error) {
+        console.error('Toggle user error:', error);
+        showAlert('error', 'Network error occurred');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function resetPassword() {
+    showAlert('info', 'Password reset functionality will be implemented soon');
+}
+
+function sendNotification() {
+    showAlert('info', 'Notification feature will be implemented soon');
+}
+
+function viewLoginHistory() {
+    showAlert('info', 'Login history feature will be implemented soon');
+}
+
+function extendSubscription() {
+    showAlert('info', 'Subscription extension feature will be implemented soon');
+}
+{% endblock %}

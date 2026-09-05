@@ -1,0 +1,803 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{% if mode == 'create' %}Buat Undangan{% else %}Edit Undangan{% endif %} - Invywed Admin{% endblock %}
+{% block page_title %}{% if mode == 'create' %}Buat Undangan Baru{% else %}Edit Undangan{% endif %}{% endblock %}
+{% block page_subtitle %}{% if mode == 'create' %}Isi semua informasi pernikahan dan pilih template{% else %}Ubah pengaturan undangan{% endif %}{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div class="mb-4 md:mb-6">
+    <a href="{% url 'admin_panel:invitation_list' %}" class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
+        <i class="fas fa-arrow-left mr-2"></i>Kembali ke Daftar
+    </a>
+</div>
+
+{% if mode == 'edit' and form_is_complete %}
+<!-- Form Already Complete Notification -->
+<div class="bg-green-50 border-l-4 border-green-500 p-6 mb-6 rounded-lg">
+    <div class="flex items-start">
+        <div class="flex-shrink-0">
+            <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+            <h3 class="text-lg font-medium text-green-800 mb-2">
+                Form Undangan Sudah Lengkap
+            </h3>
+            <p class="text-sm text-green-700 mb-4">
+                User telah melengkapi semua data undangan. Jika ingin mengubah data, klik tombol Edit di bawah ini.
+            </p>
+            <div class="mt-4">
+                <button type="button" onclick="toggleEditMode()" id="editModeBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                    <i class="fas fa-edit mr-2"></i>Edit Data Undangan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data" class="space-y-6" id="invitationForm">
+    {% csrf_token %}
+    
+    {% if mode == 'create' %}
+    <!-- User & Client Information -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                <i class="fas fa-user mr-2"></i>
+                User & Client Information
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <!-- Select Existing User or Create New -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <label class="flex items-center space-x-3 mb-4">
+                    <input type="radio" name="user_option" value="existing" id="user_existing" checked 
+                        onchange="toggleUserForm()"
+                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                    <span class="text-sm font-medium text-gray-700">Pilih User yang Sudah Ada</span>
+                </label>
+                <label class="flex items-center space-x-3">
+                    <input type="radio" name="user_option" value="new" id="user_new" 
+                        onchange="toggleUserForm()"
+                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                    <span class="text-sm font-medium text-gray-700">Buat User Baru</span>
+                </label>
+            </div>
+            
+            <!-- Existing User Selection -->
+            <div id="existing_user_section" class="space-y-6">
+                <div>
+                    <label for="existing_user" class="block text-sm font-medium text-gray-700 mb-2">
+                        Pilih User <span class="text-red-500">*</span>
+                    </label>
+                    <select id="existing_user" name="existing_user" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">-- Pilih User --</option>
+                        {% for client in clients %}
+                            <option value="{{ client.id }}">
+                                {{ client.user.username }} - {{ client.user.email }} {% if client.user.get_full_name %}({{ client.user.get_full_name }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Pilih user yang sudah terdaftar</p>
+                </div>
+            </div>
+            
+            <!-- New User Form -->
+            <div id="new_user_section" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                        Username <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="username" name="username"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Masukkan username">
+                </div>
+                
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input type="email" id="email" name="email"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="user@example.com">
+                </div>
+                
+                <div>
+                    <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Depan
+                    </label>
+                    <input type="text" id="first_name" name="first_name"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama depan">
+                </div>
+                
+                <div>
+                    <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Belakang
+                    </label>
+                    <input type="text" id="last_name" name="last_name"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama belakang">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Kata Sandi
+                    </label>
+                    <div class="flex space-x-2">
+                        <input type="password" id="password" name="password"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Leave empty for auto-generated">
+                        <button type="button" id="generatePasswordBtn"
+                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap">
+                            <i class="fas fa-key mr-1"></i>Generate
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Format: invywed + 5 angka acak (contoh: invywed73829)
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor Telepon <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="phone_number" name="phone_number"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="08xxxxxxxxxx">
+                </div>
+                
+                <div>
+                    <label for="whatsapp_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor WhatsApp
+                    </label>
+                    <input type="text" id="whatsapp_number" name="whatsapp_number"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="08xxxxxxxxxx">
+                </div>
+                
+                <div>
+                    <label for="city" class="block text-sm font-medium text-gray-700 mb-2">
+                        Kota
+                    </label>
+                    <input type="text" id="city" name="city"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Kota">
+                </div>
+            </div>
+            
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+                    Alamat
+                </label>
+                <textarea id="address" name="address" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Alamat lengkap"></textarea>
+            </div>
+            
+            <div>
+                <label for="profile_photo" class="block text-sm font-medium text-gray-700 mb-2">
+                    Foto Profil
+                </label>
+                <input type="file" id="profile_photo" name="profile_photo" accept="image/*"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if mode == 'edit' and form_is_complete %}
+    <!-- Form sections hidden when complete - will be shown when edit button clicked -->
+    <div id="formSections" class="hidden">
+    {% endif %}
+    
+    <!-- Groom Information -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-user-tie mr-2"></i>
+                        Informasi Mempelai Pria
+                    </h3>
+                </div>
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="groom_full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Lengkap <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="groom_full_name" name="groom_full_name"
+                        value="{% if groom_data %}{{ groom_data.full_name }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama lengkap">
+                </div>
+                
+                <div>
+                    <label for="groom_nickname" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Panggilan
+                    </label>
+                    <input type="text" id="groom_nickname" name="groom_nickname"
+                        value="{% if groom_data %}{{ groom_data.nickname }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama panggilan">
+                </div>
+                
+                <div>
+                    <label for="groom_father_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Ayah
+                    </label>
+                    <input type="text" id="groom_father_name" name="groom_father_name"
+                        value="{% if groom_data %}{{ groom_data.father_name }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama ayah">
+                </div>
+                
+                <div>
+                    <label for="groom_mother_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Ibu
+                    </label>
+                    <input type="text" id="groom_mother_name" name="groom_mother_name"
+                        value="{% if groom_data %}{{ groom_data.mother_name }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama ibu">
+                </div>
+                
+                <div>
+                    <label for="groom_child_order" class="block text-sm font-medium text-gray-700 mb-2">
+                        Anak Ke-
+                    </label>
+                    <input type="text" id="groom_child_order" name="groom_child_order"
+                        value="{% if groom_data %}{{ groom_data.child_order }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Contoh: Putra pertama dari">
+                </div>
+                
+                <div>
+                    <label for="groom_main_photo" class="block text-sm font-medium text-gray-700 mb-2">
+                        Foto Utama
+                    </label>
+                    <input type="file" id="groom_main_photo" name="groom_main_photo" accept="image/*"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    {% if groom_data and groom_data.main_photo %}
+                    <p class="mt-1 text-xs text-gray-500">Current: <a href="{{ groom_data.main_photo.url }}" target="_blank">{{ groom_data.main_photo.name }}</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bride Information -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                <i class="fas fa-user-dress mr-2"></i>
+                Informasi Mempelai Wanita
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="bride_full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Lengkap
+                    </label>
+                    <input type="text" id="bride_full_name" name="bride_full_name"
+                        value="{% if bride_data %}{{ bride_data.full_name }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama lengkap">
+                </div>
+                
+                <div>
+                    <label for="bride_nickname" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Panggilan
+                    </label>
+                    <input type="text" id="bride_nickname" name="bride_nickname"
+                        value="{% if bride_data %}{{ bride_data.nickname }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama panggilan">
+                </div>
+                
+                <div>
+                    <label for="bride_father_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Ayah
+                    </label>
+                    <input type="text" id="bride_father_name" name="bride_father_name"
+                        value="{% if bride_data %}{{ bride_data.father_name }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama ayah">
+                </div>
+                
+                <div>
+                    <label for="bride_mother_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Ibu
+                    </label>
+                    <input type="text" id="bride_mother_name" name="bride_mother_name"
+                        value="{% if bride_data %}{{ bride_data.mother_name }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Nama ibu">
+                </div>
+                
+                <div>
+                    <label for="bride_child_order" class="block text-sm font-medium text-gray-700 mb-2">
+                        Anak Ke-
+                    </label>
+                    <input type="text" id="bride_child_order" name="bride_child_order"
+                        value="{% if bride_data %}{{ bride_data.child_order }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Contoh: Putri pertama dari">
+                </div>
+                
+                <div>
+                    <label for="bride_main_photo" class="block text-sm font-medium text-gray-700 mb-2">
+                        Foto Utama
+                    </label>
+                    <input type="file" id="bride_main_photo" name="bride_main_photo" accept="image/*"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    {% if bride_data and bride_data.main_photo %}
+                    <p class="mt-1 text-xs text-gray-500">Saat ini: <a href="{{ bride_data.main_photo.url }}" target="_blank">{{ bride_data.main_photo.name }}</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Event (Akad) -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Acara Utama (Akad Nikah)
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="main_event_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Acara
+                    </label>
+                    <input type="text" id="main_event_name" name="main_event_name"
+                        value="{% if main_event_data %}{{ main_event_data.event_name }}{% else %}Akad Nikah{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Akad Nikah">
+                </div>
+                
+                <div>
+                    <label for="main_event_date" class="block text-sm font-medium text-gray-700 mb-2">
+                        Tanggal Acara
+                    </label>
+                    <input type="date" id="main_event_date" name="main_event_date"
+                        value="{% if main_event_data %}{{ main_event_data.event_date|date:'Y-m-d' }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="main_start_time" class="block text-sm font-medium text-gray-700 mb-2">
+                        Jam Mulai
+                    </label>
+                    <input type="time" id="main_start_time" name="main_start_time"
+                        value="{% if main_event_data %}{{ main_event_data.start_time|time:'H:i' }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="main_end_time" class="block text-sm font-medium text-gray-700 mb-2">
+                        End Time
+                    </label>
+                    <input type="time" id="main_end_time" name="main_end_time"
+                        value="{% if main_event_data and main_event_data.end_time %}{{ main_event_data.end_time|time:'H:i' }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="main_timezone" class="block text-sm font-medium text-gray-700 mb-2">
+                        Timezone
+                    </label>
+                    <select id="main_timezone" name="main_timezone"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="WIB" {% if main_event_data and main_event_data.timezone == 'WIB' %}selected{% endif %}>WIB - Waktu Indonesia Barat</option>
+                        <option value="WITA" {% if main_event_data and main_event_data.timezone == 'WITA' %}selected{% endif %}>WITA - Waktu Indonesia Tengah</option>
+                        <option value="WIT" {% if main_event_data and main_event_data.timezone == 'WIT' %}selected{% endif %}>WIT - Waktu Indonesia Timur</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <label for="main_venue_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nama Tempat
+                </label>
+                <input type="text" id="main_venue_name" name="main_venue_name"
+                    value="{% if main_event_data %}{{ main_event_data.venue_name }}{% endif %}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Venue name">
+            </div>
+            
+            <div>
+                <label for="main_venue_address" class="block text-sm font-medium text-gray-700 mb-2">
+                    Alamat Tempat
+                </label>
+                <textarea id="main_venue_address" name="main_venue_address" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Alamat lengkap">{% if main_event_data %}{{ main_event_data.venue_address }}{% endif %}</textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="main_venue_phone" class="block text-sm font-medium text-gray-700 mb-2">
+                        Venue Phone
+                    </label>
+                    <input type="text" id="main_venue_phone" name="main_venue_phone"
+                        value="{% if main_event_data %}{{ main_event_data.venue_phone }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Phone number">
+                </div>
+                
+                <div>
+                    <label for="main_google_maps_url" class="block text-sm font-medium text-gray-700 mb-2">
+                        Google Maps URL
+                    </label>
+                    <input type="url" id="main_google_maps_url" name="main_google_maps_url"
+                        value="{% if main_event_data %}{{ main_event_data.google_maps_url }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="https://maps.google.com/...">
+                </div>
+            </div>
+            
+            <div>
+                <label for="main_venue_photo" class="block text-sm font-medium text-gray-700 mb-2">
+                    Venue Photo
+                </label>
+                <input type="file" id="main_venue_photo" name="main_venue_photo" accept="image/*"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                {% if main_event_data and main_event_data.venue_photo %}
+                <p class="mt-1 text-xs text-gray-500">Current: <a href="{{ main_event_data.venue_photo.url }}" target="_blank">{{ main_event_data.venue_photo.name }}</a></p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="main_special_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                    Special Notes
+                </label>
+                <textarea id="main_special_notes" name="main_special_notes" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Catatan khusus atau instruksi">{% if main_event_data %}{{ main_event_data.special_notes }}{% endif %}</textarea>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reception Event (Optional) -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                <i class="fas fa-glass-cheers mr-2"></i>
+                Acara Resepsi (Opsional)
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="reception_event_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Event Name
+                    </label>
+                    <input type="text" id="reception_event_name" name="reception_event_name"
+                        value="{% if reception_event_data %}{{ reception_event_data.event_name }}{% else %}Resepsi Pernikahan{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Resepsi Pernikahan">
+                </div>
+                
+                <div>
+                    <label for="reception_event_date" class="block text-sm font-medium text-gray-700 mb-2">
+                        Event Date
+                    </label>
+                    <input type="date" id="reception_event_date" name="reception_event_date"
+                        value="{% if reception_event_data %}{{ reception_event_data.event_date|date:'Y-m-d' }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="reception_start_time" class="block text-sm font-medium text-gray-700 mb-2">
+                        Start Time
+                    </label>
+                    <input type="time" id="reception_start_time" name="reception_start_time"
+                        value="{% if reception_event_data %}{{ reception_event_data.start_time|time:'H:i' }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="reception_end_time" class="block text-sm font-medium text-gray-700 mb-2">
+                        End Time
+                    </label>
+                    <input type="time" id="reception_end_time" name="reception_end_time"
+                        value="{% if reception_event_data and reception_event_data.end_time %}{{ reception_event_data.end_time|time:'H:i' }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="reception_timezone" class="block text-sm font-medium text-gray-700 mb-2">
+                        Timezone
+                    </label>
+                    <select id="reception_timezone" name="reception_timezone"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="WIB" {% if reception_event_data and reception_event_data.timezone == 'WIB' %}selected{% endif %}>WIB - Waktu Indonesia Barat</option>
+                        <option value="WITA" {% if reception_event_data and reception_event_data.timezone == 'WITA' %}selected{% endif %}>WITA - Waktu Indonesia Tengah</option>
+                        <option value="WIT" {% if reception_event_data and reception_event_data.timezone == 'WIT' %}selected{% endif %}>WIT - Waktu Indonesia Timur</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <label for="reception_venue_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Venue Name
+                </label>
+                <input type="text" id="reception_venue_name" name="reception_venue_name"
+                    value="{% if reception_event_data %}{{ reception_event_data.venue_name }}{% endif %}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Venue name">
+            </div>
+            
+            <div>
+                <label for="reception_venue_address" class="block text-sm font-medium text-gray-700 mb-2">
+                    Venue Address
+                </label>
+                <textarea id="reception_venue_address" name="reception_venue_address" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Full address">{% if reception_event_data %}{{ reception_event_data.venue_address }}{% endif %}</textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="reception_venue_phone" class="block text-sm font-medium text-gray-700 mb-2">
+                        Venue Phone
+                    </label>
+                    <input type="text" id="reception_venue_phone" name="reception_venue_phone"
+                        value="{% if reception_event_data %}{{ reception_event_data.venue_phone }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Phone number">
+                </div>
+                
+                <div>
+                    <label for="reception_google_maps_url" class="block text-sm font-medium text-gray-700 mb-2">
+                        Google Maps URL
+                    </label>
+                    <input type="url" id="reception_google_maps_url" name="reception_google_maps_url"
+                        value="{% if reception_event_data %}{{ reception_event_data.google_maps_url }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="https://maps.google.com/...">
+                </div>
+                
+                <div>
+                    <label for="reception_dress_code" class="block text-sm font-medium text-gray-700 mb-2">
+                        Dress Code
+                    </label>
+                    <input type="text" id="reception_dress_code" name="reception_dress_code"
+                        value="{% if reception_event_data %}{{ reception_event_data.dress_code }}{% endif %}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Dress code">
+                </div>
+            </div>
+            
+            <div>
+                <label for="reception_venue_photo" class="block text-sm font-medium text-gray-700 mb-2">
+                    Venue Photo
+                </label>
+                <input type="file" id="reception_venue_photo" name="reception_venue_photo" accept="image/*"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                {% if reception_event_data and reception_event_data.venue_photo %}
+                <p class="mt-1 text-xs text-gray-500">Current: <a href="{{ reception_event_data.venue_photo.url }}" target="_blank">{{ reception_event_data.venue_photo.name }}</a></p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="reception_adab_walimah" class="block text-sm font-medium text-gray-700 mb-2">
+                    Adab Walimah
+                </label>
+                <textarea id="reception_adab_walimah" name="reception_adab_walimah" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Guidelines for guests">{% if reception_event_data %}{{ reception_event_data.adab_walimah }}{% endif %}</textarea>
+            </div>
+            
+            <div>
+                <label for="reception_special_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                    Special Notes
+                </label>
+                <textarea id="reception_special_notes" name="reception_special_notes" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Special notes">{% if reception_event_data %}{{ reception_event_data.special_notes }}{% endif %}</textarea>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Template & Invitation Settings -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                <i class="fas fa-palette mr-2"></i>
+                Template & Pengaturan Undangan
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div>
+                <label for="theme" class="block text-sm font-medium text-gray-700 mb-2">
+                    Template Tema
+                </label>
+                <select id="theme" name="theme"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select theme</option>
+                    {% for theme in themes %}
+                        <option value="{{ theme.id }}" {% if invitation and invitation.theme and invitation.theme.id == theme.id %}selected{% endif %}>
+                            {{ theme.name }} {% if theme.category %}({{ theme.category.name }}){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                    <p class="mt-1 text-xs text-gray-500">Pilih template tema yang akan digunakan untuk undangan ini</p>
+            </div>
+            
+            <div>
+                <label for="invitation_slug" class="block text-sm font-medium text-gray-700 mb-2">
+                    Slug Undangan (URL) <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="invitation_slug" name="invitation_slug"
+                    value="{% if invitation %}{{ invitation.invitation_slug }}{% endif %}"
+                    required
+                    pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono"
+                    placeholder="contoh: romeo-juliet">
+                <p class="mt-1 text-xs text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Slug harus unik, hanya huruf kecil, angka, dan tanda hubung (-). Akan otomatis dinormalisasi saat disimpan.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                        Status
+                    </label>
+                    <select id="status" name="status"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="draft" {% if invitation and invitation.status == 'draft' %}selected{% elif mode == 'create' %}selected{% endif %}>Draft</option>
+                        <option value="active" {% if invitation and invitation.status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if invitation and invitation.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-end">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_public"
+                            {% if invitation and invitation.is_public or mode == 'create' %}checked{% endif %}
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm font-medium text-gray-700">Public Invitation</span>
+                    </label>
+                    <p class="ml-3 text-xs text-gray-500">Allow public access</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics (if editing) -->
+    {% if invitation %}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                <i class="fas fa-chart-bar mr-2"></i>
+                Statistik
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <span class="text-sm text-gray-500">Dilihat</span>
+                    <p class="text-lg font-medium text-gray-900">{{ invitation.view_count }}</p>
+                </div>
+                <div>
+                    <span class="text-sm text-gray-500">Dibuat</span>
+                    <p class="text-lg font-medium text-gray-900">{{ invitation.created_at|date:"d M Y" }}</p>
+                </div>
+                <div>
+                    <span class="text-sm text-gray-500">Terakhir Diupdate</span>
+                    <p class="text-lg font-medium text-gray-900">{{ invitation.updated_at|date:"d M Y" }}</p>
+                </div>
+                {% if invitation.last_viewed_at %}
+                <div>
+                    <span class="text-sm text-gray-500">Terakhir Dilihat</span>
+                    <p class="text-lg font-medium text-gray-900">{{ invitation.last_viewed_at|date:"d M Y" }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if mode == 'edit' and form_is_complete %}
+    </div> <!-- End formSections -->
+    {% endif %}
+    
+    <!-- Submit Buttons -->
+    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <a href="{% url 'admin_panel:invitation_list' %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors duration-200">
+            Batal
+        </a>
+        <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+            <i class="fas fa-save mr-2"></i>
+            {% if mode == 'create' %}Buat Undangan{% else %}Perbarui Undangan{% endif %}
+        </button>
+    </div>
+</form>
+
+<script>
+function toggleUserForm() {
+    const existingRadio = document.getElementById('user_existing');
+    const newRadio = document.getElementById('user_new');
+    const existingSection = document.getElementById('existing_user_section');
+    const newSection = document.getElementById('new_user_section');
+    const existingUserSelect = document.getElementById('existing_user');
+    const newUserInputs = newSection.querySelectorAll('input, select, textarea');
+    
+    if (existingRadio.checked) {
+        existingSection.classList.remove('hidden');
+        newSection.classList.add('hidden');
+        existingUserSelect.setAttribute('required', 'required');
+        newUserInputs.forEach(input => {
+            input.removeAttribute('required');
+            input.disabled = true;
+        });
+    } else {
+        existingSection.classList.add('hidden');
+        newSection.classList.remove('hidden');
+        existingUserSelect.removeAttribute('required');
+        newUserInputs.forEach(input => {
+            if (input.name === 'username' || input.name === 'email' || input.name === 'phone_number') {
+                input.setAttribute('required', 'required');
+            }
+            input.disabled = false;
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize user form toggle
+    toggleUserForm();
+    
+    // If form is complete, form sections are already hidden via CSS class
+    
+    const generatePasswordBtn = document.getElementById('generatePasswordBtn');
+    if (generatePasswordBtn) {
+        generatePasswordBtn.addEventListener('click', async function() {
+            // Generate 5 random digits (10000 to 99999)
+            const randomNumbers = Math.floor(10000 + Math.random() * 90000);
+            const password = 'invywed' + randomNumbers;
+            
+            // Set password field value
+            const passwordInput = document.getElementById('password');
+            if (passwordInput) {
+                passwordInput.value = password;
+                passwordInput.type = 'text'; // Show password temporarily
+                
+                // Copy to clipboard using modern API
+                try {
+                    await navigator.clipboard.writeText(password);
+                    
+                    // Show notification
+                    if (typeof showAlert === 'function') {
+                        showAlert('success', 'Password generated: ' + password + ' (Copied to clipboard)');
+                    } else {
+                        alert('Password generated: ' + password + '\n(Copied to clipboard)');
+                    }
+                } catch (err) {
+                    // Fallback for older browsers
+                    passwordInput.select();
+                    document.execCommand('copy');
+                    alert('Password generated: ' + password + '\n(Copied to clipboard)');
+                }
+                
+                // Change back to password type after 3 seconds
+                setTimeout(function() {
+                    passwordInput.type = 'password';
+                }, 3000);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

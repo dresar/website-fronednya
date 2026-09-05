@@ -1,0 +1,1254 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block title %}Invywed - No #1 Platform Pernikahan Digital{% endblock %}
+
+{% block extra_head %}
+<!-- Home Page Specific CSS -->
+<link rel="stylesheet" href="{% static 'public/css/home.css' %}">
+
+<style>
+    /* Homepage Specific Styles */
+    .hero-gradient {
+        background: radial-gradient(ellipse at top, rgba(107, 33, 168, 0.25) 0%, rgba(26, 26, 26, 0.1) 40%, transparent 100%);
+    }
+    
+    /* Theme-aware Background */
+    body {
+        background-color: var(--bg-primary) !important;
+        color: var(--text-primary);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    section {
+        background-color: transparent;
+    }
+    
+    /* Theme Transition */
+    .theme-transition {
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    /* Navigation Theme */
+    nav.glass {
+        background: var(--glass-bg) !important;
+        border-color: var(--glass-border) !important;
+    }
+    
+    nav a, nav button {
+        color: var(--text-primary) !important;
+    }
+    
+    /* Text Colors */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--text-primary);
+    }
+    
+    p, span {
+        color: var(--text-secondary);
+    }
+    
+    .feature-card {
+        transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(147, 51, 234, 0.3);
+    }
+    
+    .stat-number {
+        background: linear-gradient(135deg, #A855F7 0%, #9333EA 50%, #6B21A8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Portrait Container untuk Mobile - Persegi Panjang ke Bawah - PAKSA dengan padding-bottom trick */
+    .square-mobile-container {
+        width: 100% !important;
+        position: relative !important;
+    }
+    
+    .square-mobile-inner {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    /* Mobile - Force Hide Text & Portrait Cards (Persegi Panjang ke Bawah) - INLINE STYLE - PAKSA */
+    @media (max-width: 640px) {
+        /* Portrait/Persegi Panjang ke Bawah dengan padding-bottom trick - PAKSA */
+        /* 9:16 aspect ratio = padding-bottom: 177.78% (lebih tinggi dari lebar) */
+        .square-mobile-container {
+            padding-bottom: 177.78% !important; /* 9:16 aspect ratio - PORTRAIT (persegi panjang ke bawah) */
+            height: 0 !important;
+        }
+        
+        /* Sembunyikan SEMUA teks dan deskripsi */
+        .theme-card-home .card-content-mobile-hidden,
+        .theme-card-home > div:last-child,
+        .theme-card-home > div.hidden,
+        .theme-card-home > div.md\\:block,
+        .theme-card-home .hidden.md\\:block,
+        .theme-card-home h3,
+        .theme-card-home .flex.items-center,
+        .theme-card-home .text-xs,
+        .theme-card-home .text-sm {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            line-height: 0 !important;
+            font-size: 0 !important;
+        }
+        
+        /* Hapus padding card */
+        .theme-card-home {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        /* Pastikan gambar fill container */
+        .theme-card-home img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+    }
+    
+    /* Desktop - PAKSA PORTRAIT JUGA (9:16) */
+    @media (min-width: 641px) {
+        .square-mobile-container {
+            padding-bottom: 177.78% !important; /* 9:16 aspect ratio - PORTRAIT - PAKSA */
+            height: 0 !important;
+        }
+    }
+    
+    /* Theme Card Animations */
+    .theme-card {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+        animation: fadeInUpScale 0.6s ease-out forwards;
+        cursor: pointer;
+    }
+    
+    .theme-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(147, 51, 234, 0.4);
+    }
+    
+    .theme-card:nth-child(1) { animation-delay: 0.05s; }
+    .theme-card:nth-child(2) { animation-delay: 0.1s; }
+    .theme-card:nth-child(3) { animation-delay: 0.15s; }
+    .theme-card:nth-child(4) { animation-delay: 0.2s; }
+    .theme-card:nth-child(5) { animation-delay: 0.25s; }
+    .theme-card:nth-child(6) { animation-delay: 0.3s; }
+    .theme-card:nth-child(7) { animation-delay: 0.35s; }
+    .theme-card:nth-child(8) { animation-delay: 0.4s; }
+    .theme-card:nth-child(9) { animation-delay: 0.45s; }
+    .theme-card:nth-child(10) { animation-delay: 0.5s; }
+    .theme-card:nth-child(11) { animation-delay: 0.55s; }
+    .theme-card:nth-child(12) { animation-delay: 0.6s; }
+    .theme-card:nth-child(n+13) { animation-delay: 0.65s; }
+    
+    .theme-card img {
+        transition: transform 0.4s ease;
+    }
+    
+    .theme-card:hover img {
+        transform: scale(1.05);
+    }
+    
+    @keyframes fadeInUpScale {
+        0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        50% {
+            transform: translateY(-5px) scale(1.01);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    /* Button Animation */
+    .theme-card button,
+    .theme-card a {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .theme-card button:active,
+    .theme-card a:active {
+        transform: scale(0.95);
+    }
+    
+    .theme-card.loading {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    #themesGrid.loading {
+        min-height: 400px;
+        position: relative;
+    }
+    
+    #themesGrid.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(147, 51, 234, 0.2);
+        border-top-color: #9333EA;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow: auto;
+        position: relative;
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: all 0.3s;
+    }
+    
+    .modal-close:hover {
+        background: rgba(0, 0, 0, 0.7);
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Promo Banner -->
+<div class="bg-indigo-700 text-white py-2 text-center text-sm">
+    <p class="container mx-auto px-4">
+        <strong>Promo Terbatas Diskon 12%</strong> Kode Promo: <strong>DES25</strong> Berlaku hingga 20 Dec 2025
+    </p>
+</div>
+
+<!-- Navigation -->
+<nav class="glass border-b border-purple-500/20 sticky top-0 z-50 backdrop-blur-lg">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <a href="{% url 'public_home' %}" class="flex items-center gap-3">
+                    <img src="/media/logo/Logo Brand.png" alt="Invywed Logo" class="h-10 w-auto object-contain">
+                </a>
+            </div>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-6">
+                <a href="{% url 'public_home' %}" class="text-gray-200 hover:text-purple-400 transition-colors">Home</a>
+                <a href="{% url 'public_theme_list' %}" class="text-gray-200 hover:text-purple-400 transition-colors">Tema</a>
+                <a href="#features" class="text-gray-200 hover:text-purple-400 transition-colors">Fitur</a>
+                <a href="#pricing" class="text-gray-200 hover:text-purple-400 transition-colors">Harga</a>
+                <a href="{% url 'users:login' %}" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all">
+                    Masuk
+                </a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuBtn" class="md:hidden text-gray-200 hover:text-purple-400">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden mt-4 pb-4 border-t border-purple-500/20 pt-4">
+            <div class="flex flex-col gap-3">
+                <a href="{% url 'public_home' %}" class="text-gray-200 hover:text-purple-400 transition-colors py-2">Home</a>
+                <a href="{% url 'public_theme_list' %}" class="text-gray-200 hover:text-purple-400 transition-colors py-2">Tema</a>
+                <a href="#features" class="text-gray-200 hover:text-purple-400 transition-colors py-2" onclick="closeMobileMenu()">Fitur</a>
+                <a href="#pricing" class="text-gray-200 hover:text-purple-400 transition-colors py-2" onclick="closeMobileMenu()">Harga</a>
+                <a href="{% url 'users:login' %}" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all text-center">
+                    Masuk
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="relative py-12 md:py-20 lg:py-24 overflow-hidden">
+    <!-- Background Image -->
+    <div class="absolute inset-0 z-0">
+        <img src="/media/baground/3433369.jpg" alt="Hero Background" class="w-full h-full object-cover">
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black/60"></div>
+    </div>
+    
+    <!-- Content -->
+    <div class="container mx-auto px-4 relative z-10">
+        <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <!-- Left Side - Text Content -->
+            <div class="text-white">
+                <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 leading-tight">
+                    Buat Undangan Online Digital Website Untuk
+                </h1>
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" style="color: #fef08a;">
+                    Aqiqah
+                </h2>
+                <p class="text-base md:text-lg text-white/90 mb-8 leading-relaxed">
+                    Buat undangan online digital website custom dengan Satu Momen, meski kamu gaptek tetap bisa bikin undangan website sendiri dari smart phone. Cukup pilih tema, edit detail acara, upload foto, semua bisa selesai dalam hitungan menit.
+                </p>
+                <a 
+                    href="{% url 'users:login' %}?register=true" 
+                    class="inline-flex items-center gap-2 px-8 py-4 bg-indigo-700 hover:bg-indigo-800 text-white text-lg font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                    <span>Daftar & Coba Gratis</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Right Side - Hero Image -->
+            <div class="relative flex justify-center items-center">
+                <div class="relative">
+                    <img 
+                        src="/media/hero/aplikasi-undangan-digital-website.webp" 
+                        alt="Aplikasi Undangan Digital Website" 
+                        class="w-full max-w-lg mx-auto object-contain drop-shadow-2xl"
+                        style="transform: rotate(-5deg);"
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Themes Section -->
+<section id="themes" class="py-12 md:py-20">
+    <div class="container mx-auto px-4">
+        <!-- Section Header -->
+        <div class="text-center mb-8">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4" style="color: var(--text-primary);">
+                Tema Undangan Pernikahan
+            </h2>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto mb-4" style="color: var(--text-secondary);">
+                Klik kategori dan subtema dibawah ini untuk melihat berbagai pilihan tema undangan pernikahan siap pakai.
+            </p>
+            <a href="{% url 'public_theme_list' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                <span>Lihat Selengkapnya</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Category Filters -->
+        {% if categories %}
+        <div class="flex flex-wrap justify-center gap-3 mb-8">
+            <button class="category-filter px-6 py-2 rounded-lg font-semibold transition-all bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg" data-category="all">
+                Semua
+            </button>
+            {% for category in categories %}
+            <button class="category-filter px-6 py-2 rounded-lg font-semibold transition-all text-white" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-secondary)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'" data-category="{{ category.slug }}">
+                {{ category.name }}
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Themes Grid -->
+        {% if themes %}
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4" id="themesGrid">
+            {% for theme in themes %}
+            <div class="theme-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 bg-gray-900 border border-gray-800" data-category="{% if theme.category %}{{ theme.category.slug }}{% else %}all{% endif %}" data-theme-id="{{ theme.id }}" data-theme-slug="{{ theme.slug }}" data-theme-name="{{ theme.name }}" data-theme-thumbnail="{% if theme.thumbnail %}{{ theme.thumbnail.url }}{% endif %}">
+                <!-- Theme Preview - Square -->
+                <div class="relative theme-thumbnail-click cursor-pointer">
+                    {% if theme.thumbnail %}
+                        <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="w-full aspect-square object-cover">
+                    {% else %}
+                        <div class="w-full aspect-square bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                            <i class="fas fa-palette text-white text-4xl md:text-5xl opacity-70"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Buttons - Below Image -->
+                <div class="bg-gray-800 p-3 md:p-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{% url 'thema:theme_demo' theme.slug %}" target="_blank" class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all text-sm md:text-base shadow-md hover:shadow-lg">
+                            <i class="fas fa-eye"></i>
+                            <span>Demo</span>
+                        </a>
+                        <button class="whatsapp-share-btn flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold transition-all text-sm md:text-base shadow-md hover:shadow-lg" data-theme-slug="{{ theme.slug }}" data-theme-name="{{ theme.name }}">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>Pesan</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12" id="emptyThemes">
+            <i class="fas fa-palette text-5xl mb-4" style="color: var(--text-secondary);"></i>
+            <p style="color: var(--text-secondary);">Template akan segera hadir</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-12 md:py-20">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4" style="color: var(--text-primary);">
+                Fitur Yang Keren Dan Lengkap
+            </h2>
+            <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
+                Berikut berbagai fitur yang akan anda dapatkan.
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Feature 1: Design Modern dan Responsif -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-mobile-alt text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Design Modern dan Responsif</h3>
+                <p style="color: var(--text-secondary);">Say good bye untuk design jadul, biar undanganmu makin wow.</p>
+            </div>
+            
+            <!-- Feature 2: Share App -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-share-alt text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Share App</h3>
+                <p style="color: var(--text-secondary);">Kamu bisa share undanganmu ke media sosial dengan mudah.</p>
+            </div>
+            
+            <!-- Feature 3: Nama Tamu -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-user text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Nama Tamu</h3>
+                <p style="color: var(--text-secondary);">Menampilkan nama tamu yang diundang agar terasa lebih dekat</p>
+            </div>
+            
+            <!-- Feature 4: Amplop Digital -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-envelope text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Amplop Digital</h3>
+                <p style="color: var(--text-secondary);">Tamu dapat memberikan amplop langsung secara digital</p>
+            </div>
+            
+            <!-- Feature 5: Penunjuk Lokasi -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-map-marker-alt text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Penunjuk Lokasi</h3>
+                <p style="color: var(--text-secondary);">Dapat menunjukkan dan mengarahkan tamu ke lokasi acara</p>
+            </div>
+            
+            <!-- Feature 6: Hitungan Mundur -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-clock text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Hitungan Mundur</h3>
+                <p style="color: var(--text-secondary);">Hitung mundur tanggal acara pernikahan</p>
+            </div>
+            
+            <!-- Feature 7: Galeri Foto -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-images text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Galeri Foto</h3>
+                <p style="color: var(--text-secondary);">Bagikan momen bahagia Kamu kepada tamu undangan</p>
+            </div>
+            
+            <!-- Feature 8: Background Musik -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-music text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Background Musik</h3>
+                <p style="color: var(--text-secondary);">Hiasi undangan pernikahan online dengan musik kesukaanmu</p>
+            </div>
+            
+            <!-- Feature 9: Live Streaming -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-video text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Live Streaming</h3>
+                <p style="color: var(--text-secondary);">Bagikan momen bahagia kepada tamu yang tidak dapat hadir</p>
+            </div>
+            
+            <!-- Feature 10: Doa & Ucapan -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-comments text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Doa & Ucapan</h3>
+                <p style="color: var(--text-secondary);">Memberikan ruang untuk mengucapkan doa dan ucapan</p>
+            </div>
+            
+            <!-- Feature 11: Love Stories -->
+            <div class="feature-card glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-heart text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Love Stories</h3>
+                <p style="color: var(--text-secondary);">Ceritakan Kisah Cinta kamu dengan leluasa.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section id="pricing" class="py-12 md:py-20 glass border-y border-purple-500/20">
+    <div class="container mx-auto px-4">
+        <!-- Coupon Banner -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg">
+                Gunakan kode kupon <strong>INVI</strong> untuk mendapatkan diskon 50%
+            </div>
+        </div>
+        
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4" style="color: var(--text-primary);">
+                Harga Terbaik Untuk Anda
+            </h2>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto" style="color: var(--text-secondary);">
+                kamu adalah segalanya, untuk kamu harga terbaik dengan jaminan website yang berkualitas
+            </p>
+        </div>
+        
+        <!-- Pricing Cards -->
+        <div class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <!-- GRATIS Plan -->
+            <div class="glass rounded-xl p-8 text-center relative" style="border-color: var(--glass-border);">
+                <div class="mb-6">
+                    <button class="px-6 py-2 bg-green-700 text-white rounded-lg font-bold text-lg mb-4">
+                        GRATIS
+                    </button>
+                    <div class="text-4xl font-bold mb-2" style="color: var(--text-primary);">Rp 0</div>
+                </div>
+                
+                <ul class="space-y-3 mb-8 text-left">
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Masa Aktif 2 hari</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>1 Kuota Undangan</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Akses Tema Basic</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-times text-red-500 mr-3"></i>
+                        <span class="line-through opacity-50">Akses Tema Premium</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Unlimited Tamu Undangan</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Unlimited Ucapan & Kehadiran</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Detail Info Acara</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Amplop Digital</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Love Story</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Gallery Foto (Max 10)</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Export Ucapan (PDF, Excel, CSV)</span>
+                    </li>
+                </ul>
+                
+                <a href="{% url 'users:login' %}?register=true" class="block w-full px-6 py-3 bg-green-700 hover:bg-green-800 text-white rounded-lg font-semibold transition-all">
+                    Mulai Sekarang
+                </a>
+            </div>
+            
+            <!-- PLUS Plan -->
+            <div class="glass rounded-xl p-8 text-center relative" style="border-color: var(--glass-border);">
+                <div class="mb-6">
+                    <button class="px-6 py-2 bg-green-700 text-white rounded-lg font-bold text-lg mb-4">
+                        PLUS
+                    </button>
+                    <div class="mb-2">
+                        <span class="text-2xl line-through" style="color: var(--text-secondary);">Rp 198.000</span>
+                    </div>
+                    <div class="text-4xl font-bold mb-2" style="color: var(--text-primary);">Rp 99.000</div>
+                </div>
+                
+                <ul class="space-y-3 mb-8 text-left">
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Masa Aktif 1 Tahun</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>1 Kuota Undangan</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Akses Tema Basic</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-times text-red-500 mr-3"></i>
+                        <span class="line-through opacity-50">Akses Tema Premium</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Unlimited Tamu Undangan</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Unlimited Ucapan & Kehadiran</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Detail Info Acara</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Amplop Digital</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Love Story</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Gallery Foto (Max 10)</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-secondary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Export Ucapan (PDF, Excel, CSV)</span>
+                    </li>
+                </ul>
+                
+                <a href="{% url 'users:register' %}" class="block w-full px-6 py-3 bg-green-700 hover:bg-green-800 text-white rounded-lg font-semibold transition-all">
+                    Pilih Plan
+                </a>
+            </div>
+            
+            <!-- PREMIUM Plan -->
+            <div class="glass rounded-xl p-8 border-2 border-yellow-500 text-center relative bg-gradient-to-br from-purple-900/50 to-purple-800/50">
+                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <span class="px-4 py-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-sm font-semibold rounded-full shadow-lg">
+                        Populer
+                    </span>
+                </div>
+                <div class="mb-6">
+                    <button class="px-6 py-2 bg-yellow-500 text-white rounded-lg font-bold text-lg mb-4">
+                        PREMIUM
+                    </button>
+                    <div class="mb-2">
+                        <span class="text-2xl line-through" style="color: var(--text-secondary);">Rp 298.000</span>
+                    </div>
+                    <div class="text-4xl font-bold mb-2" style="color: var(--text-primary);">Rp 149.000</div>
+                </div>
+                
+                <ul class="space-y-3 mb-8 text-left">
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Masa Aktif 1 Tahun</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>1 Kuota Undangan</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Akses Tema Basic</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Akses Tema Premium</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Unlimited Tamu Undangan</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Unlimited Ucapan & Kehadiran</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Detail Info Acara</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Amplop Digital</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Love Story</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Gallery Foto (Max 20)</span>
+                    </li>
+                    <li class="flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Export Ucapan (PDF, Excel, CSV)</span>
+                    </li>
+                </ul>
+                
+                <a href="{% url 'users:login' %}?register=true" class="block w-full px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-white rounded-lg font-semibold transition-all shadow-lg">
+                    Pilih Plan
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-12 md:py-20">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4" style="color: var(--text-primary);">
+                Apa Kata Mereka?
+            </h2>
+            <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
+                Testimoni dari pasangan yang sudah menggunakan platform kami
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- Testimonial 1 -->
+            <div class="glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="flex items-center gap-1 mb-4 text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="mb-4" style="color: var(--text-secondary);">
+                    "Platform yang sangat mudah digunakan! Undangan kami langsung jadi dan bisa disebar dalam hitungan menit."
+                </p>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center text-white font-bold">
+                        A
+                    </div>
+                    <div>
+                        <div class="font-semibold" style="color: var(--text-primary);">Andi & Sari</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">Jakarta</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 2 -->
+            <div class="glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="flex items-center gap-1 mb-4 text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="mb-4" style="color: var(--text-secondary);">
+                    "Template-nya bagus-bagus dan modern. Tamu-tamu kami suka banget dengan undangan digitalnya!"
+                </p>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center text-white font-bold">
+                        B
+                    </div>
+                    <div>
+                        <div class="font-semibold" style="color: var(--text-primary);">Budi & Rina</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">Bandung</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 3 -->
+            <div class="glass rounded-xl p-6" style="border-color: var(--glass-border);">
+                <div class="flex items-center gap-1 mb-4 text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="mb-4" style="color: var(--text-secondary);">
+                    "Fitur digital guestbook sangat membantu! Semua tamu tercatat dengan rapi dan tidak ada yang terlewat."
+                </p>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center text-white font-bold">
+                        C
+                    </div>
+                    <div>
+                        <div class="font-semibold" style="color: var(--text-primary);">Cahya & Dini</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">Surabaya</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Preview Thumbnail -->
+<div id="thumbnailModal" class="modal-overlay">
+    <div class="modal-content relative">
+        <button class="modal-close" onclick="closeThumbnailModal()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="p-6">
+            <img id="modalThumbnail" src="" alt="" class="w-full max-w-2xl mx-auto rounded-lg mb-6">
+            <div class="text-center">
+                <h3 id="modalThemeName" class="text-2xl font-bold text-gray-900 mb-4"></h3>
+                <div class="flex gap-3 justify-center">
+                    <a id="modalDemoBtn" href="#" target="_blank" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all">
+                        <i class="fas fa-eye mr-2"></i>Demo
+                    </a>
+                    <button id="modalWhatsappBtn" class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-all">
+                        <i class="fab fa-whatsapp mr-2"></i>Pesan via WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="relative z-10 mt-20 glass border-t border-purple-500/20">
+    <div class="container mx-auto px-4 py-12">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+            <!-- About -->
+            <div>
+                <div class="flex items-center gap-2 mb-4">
+                    <img src="/media/logo/Logo Brand.png" alt="Invywed Logo" class="h-10 w-auto object-contain">
+                </div>
+                <p class="text-sm text-gray-400">
+                    Platform Undangan Digital dengan Teknologi AI
+                </p>
+            </div>
+            
+            <!-- Quick Links -->
+            <div>
+                <h4 class="font-semibold mb-4" style="color: var(--text-primary);">Tautan Cepat</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'public_home' %}" class="text-gray-400 hover:text-purple-400 transition-colors text-sm">Home</a></li>
+                    <li><a href="{% url 'public_theme_list' %}" class="text-gray-400 hover:text-purple-400 transition-colors text-sm">Tema</a></li>
+                    <li><a href="#features" class="text-gray-400 hover:text-purple-400 transition-colors text-sm">Fitur</a></li>
+                    <li><a href="#pricing" class="text-gray-400 hover:text-purple-400 transition-colors text-sm">Harga</a></li>
+                </ul>
+            </div>
+            
+            <!-- Support -->
+            <div>
+                <h4 class="font-semibold mb-4" style="color: var(--text-primary);">Dukungan</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-purple-400 transition-colors text-sm">FAQ</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-purple-400 transition-colors text-sm">Bantuan</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-purple-400 transition-colors text-sm">Kontak</a></li>
+                </ul>
+            </div>
+            
+            <!-- Social -->
+            <div>
+                <h4 class="font-semibold mb-4" style="color: var(--text-primary);">Ikuti Kami</h4>
+                <div class="flex items-center gap-4">
+                    <a href="#" class="text-gray-400 hover:text-purple-400 transition-colors">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-purple-400 transition-colors">
+                        <i class="fab fa-facebook text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-purple-400 transition-colors">
+                        <i class="fab fa-whatsapp text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="border-t border-purple-500/20 pt-8 text-center">
+            <p class="text-xs text-gray-400">
+                © 2024 Invywed. All rights reserved.
+            </p>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+        const menu = document.getElementById('mobileMenu');
+        menu.classList.toggle('hidden');
+    });
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (href !== '#') {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    // Close mobile menu if open
+                    document.getElementById('mobileMenu').classList.add('hidden');
+                }
+            }
+        });
+    });
+    
+    // Force hide card content on mobile - PAKSA
+    function hideCardContentOnMobile() {
+        if (window.innerWidth <= 640) {
+            const cardContents = document.querySelectorAll('.theme-card-home .card-content-mobile-hidden, .theme-card-home > div:last-child');
+            cardContents.forEach(function(el) {
+                if (el && el.classList.contains('card-content-mobile-hidden') || el && el.querySelector('h3')) {
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                    el.style.height = '0';
+                    el.style.padding = '0';
+                    el.style.margin = '0';
+                    el.style.opacity = '0';
+                }
+            });
+        }
+    }
+    
+    // Run on load and resize
+    window.addEventListener('load', hideCardContentOnMobile);
+    window.addEventListener('resize', hideCardContentOnMobile);
+    
+    // Also run immediately
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hideCardContentOnMobile);
+    } else {
+        hideCardContentOnMobile();
+    }
+    
+    // Category Filter Functionality with AJAX
+    document.querySelectorAll('.category-filter').forEach(button => {
+        button.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            
+            // Update active button
+            document.querySelectorAll('.category-filter').forEach(btn => {
+                btn.classList.remove('bg-gradient-to-r', 'from-yellow-500', 'to-yellow-600', 'shadow-lg');
+                btn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            });
+            this.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            this.classList.add('bg-gradient-to-r', 'from-yellow-500', 'to-yellow-600', 'shadow-lg');
+            
+            // Show loading state
+            const themesGrid = document.getElementById('themesGrid');
+            const emptyThemes = document.getElementById('emptyThemes');
+            
+            if (themesGrid) {
+                themesGrid.classList.add('loading');
+                themesGrid.innerHTML = '';
+            }
+            if (emptyThemes) {
+                emptyThemes.style.display = 'none';
+            }
+            
+            // AJAX request
+            fetch(`/api/themes/filter/?category=${category}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Remove loading state
+                        if (themesGrid) {
+                            themesGrid.classList.remove('loading');
+                        }
+                        
+                        // Clear existing themes
+                        if (themesGrid) {
+                            themesGrid.innerHTML = '';
+                        }
+                        
+                        // Add new themes with animation
+                        if (data.themes && data.themes.length > 0) {
+                            data.themes.forEach((theme, index) => {
+                                const themeCard = createThemeCard(theme, index);
+                                if (themesGrid) {
+                                    themesGrid.appendChild(themeCard);
+                                }
+                            });
+                        } else {
+                            // Show empty state
+                            if (themesGrid) {
+                                themesGrid.innerHTML = `
+                                    <div class="col-span-full text-center py-12">
+                                        <i class="fas fa-palette text-5xl text-gray-600 mb-4"></i>
+                                        <p class="text-gray-400">Tidak ada tema untuk kategori ini</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } else {
+                        console.error('Error:', data.message);
+                        if (themesGrid) {
+                            themesGrid.classList.remove('loading');
+                            themesGrid.innerHTML = `
+                                <div class="col-span-full text-center py-12">
+                                    <p class="text-red-400">Error loading themes</p>
+                                </div>
+                            `;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (themesGrid) {
+                        themesGrid.classList.remove('loading');
+                        themesGrid.innerHTML = `
+                            <div class="col-span-full text-center py-12">
+                                <p class="text-red-400">Error loading themes</p>
+                            </div>
+                        `;
+                    }
+                });
+        });
+    });
+    
+    // Function to create theme card HTML
+    function createThemeCard(theme, index) {
+        const card = document.createElement('div');
+        card.className = 'theme-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 bg-white';
+        card.setAttribute('data-category', theme.category_slug || 'all');
+        card.setAttribute('data-theme-id', theme.id);
+        card.setAttribute('data-theme-slug', theme.slug);
+        card.setAttribute('data-theme-name', theme.name);
+        card.setAttribute('data-theme-thumbnail', theme.thumbnail_url || '');
+        card.style.animationDelay = `${index * 0.05}s`;
+        
+        const thumbnailHtml = theme.thumbnail_url 
+            ? `<img src="${theme.thumbnail_url}" alt="${theme.name}" class="w-full aspect-square object-cover">`
+            : `<div class="w-full aspect-square bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <i class="fas fa-palette text-white text-4xl md:text-5xl opacity-70"></i>
+            </div>`;
+        
+        card.innerHTML = `
+            <div class="relative theme-thumbnail-click cursor-pointer">
+                ${thumbnailHtml}
+            </div>
+            <div class="bg-gray-800 p-3 md:p-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="${theme.demo_url}" target="_blank" class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all text-sm md:text-base shadow-md hover:shadow-lg">
+                        <i class="fas fa-eye"></i>
+                        <span>Demo</span>
+                    </a>
+                    <button class="whatsapp-share-btn flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold transition-all text-sm md:text-base shadow-md hover:shadow-lg" data-theme-slug="${theme.slug}" data-theme-name="${theme.name}">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>Pesan</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Add event listeners
+        const thumbnailClick = card.querySelector('.theme-thumbnail-click');
+        if (thumbnailClick) {
+            thumbnailClick.addEventListener('click', function(e) {
+                e.stopPropagation();
+                openThumbnailModal(theme);
+            });
+        }
+        
+        const whatsappBtn = card.querySelector('.whatsapp-share-btn');
+        if (whatsappBtn) {
+            whatsappBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                shareViaWhatsApp(theme.slug, theme.name);
+            });
+        }
+        
+        return card;
+    }
+    
+    // Open thumbnail modal
+    function openThumbnailModal(theme) {
+        const modal = document.getElementById('thumbnailModal');
+        const modalThumbnail = document.getElementById('modalThumbnail');
+        const modalThemeName = document.getElementById('modalThemeName');
+        const modalDemoBtn = document.getElementById('modalDemoBtn');
+        const modalWhatsappBtn = document.getElementById('modalWhatsappBtn');
+        
+        if (modal && theme) {
+            modalThumbnail.src = theme.thumbnail_url || '';
+            modalThumbnail.alt = theme.name;
+            modalThemeName.textContent = theme.name;
+            modalDemoBtn.href = theme.demo_url || `/demo/${theme.slug}/`;
+            modalWhatsappBtn.setAttribute('data-theme-slug', theme.slug);
+            modalWhatsappBtn.setAttribute('data-theme-name', theme.name);
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    // Close thumbnail modal
+    function closeThumbnailModal() {
+        const modal = document.getElementById('thumbnailModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Share via WhatsApp
+    function shareViaWhatsApp(slug, name) {
+        const demoUrl = `${window.location.origin}/demo/${slug}/`;
+        const message = `Halo! Saya tertarik dengan tema undangan *${name}*.\n\nLihat demo-nya di: ${demoUrl}\n\nApakah tema ini tersedia?`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    }
+    
+    // Event listeners for existing cards
+    document.addEventListener('DOMContentLoaded', function() {
+        // Thumbnail click to open modal
+        document.querySelectorAll('.theme-thumbnail-click').forEach(thumbnail => {
+            thumbnail.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const card = this.closest('.theme-card');
+                if (card) {
+                    const theme = {
+                        slug: card.getAttribute('data-theme-slug'),
+                        name: card.getAttribute('data-theme-name'),
+                        thumbnail_url: card.getAttribute('data-theme-thumbnail'),
+                        demo_url: `/demo/${card.getAttribute('data-theme-slug')}/`
+                    };
+                    openThumbnailModal(theme);
+                }
+            });
+        });
+        
+        // WhatsApp share button
+        document.querySelectorAll('.whatsapp-share-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const slug = this.getAttribute('data-theme-slug');
+                const name = this.getAttribute('data-theme-name');
+                shareViaWhatsApp(slug, name);
+            });
+        });
+        
+        // Modal WhatsApp button
+        const modalWhatsappBtn = document.getElementById('modalWhatsappBtn');
+        if (modalWhatsappBtn) {
+            modalWhatsappBtn.addEventListener('click', function() {
+                const slug = this.getAttribute('data-theme-slug');
+                const name = this.getAttribute('data-theme-name');
+                shareViaWhatsApp(slug, name);
+            });
+        }
+        
+        // Close modal on overlay click
+        const modal = document.getElementById('thumbnailModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeThumbnailModal();
+                }
+            });
+        }
+        
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeThumbnailModal();
+            }
+        });
+    });
+</script>
+{% endblock %}
+

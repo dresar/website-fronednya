@@ -1,0 +1,253 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Editor Templates - Invywed Admin{% endblock %}
+{% block page_title %}Editor Templates{% endblock %}
+{% block page_subtitle %}Manage invitation templates with upload and editor{% endblock %}
+
+{% block content %}
+<!-- Create Button -->
+<div class="mb-4 md:mb-6 flex justify-end">
+    <a href="{% url 'admin_panel:editor_template_edit' 0 %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+        <i class="fas fa-plus mr-2"></i>
+        Create Template
+    </a>
+</div>
+<!-- Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <i class="fas fa-file-code text-indigo-500 text-2xl mr-3"></i>
+            <div>
+                <p class="text-2xl font-bold text-gray-900">{{ total_themes|default:0 }}</p>
+                <p class="text-sm text-gray-500">Total Templates</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <i class="fas fa-eye text-green-500 text-2xl mr-3"></i>
+            <div>
+                <p class="text-2xl font-bold text-gray-900">{{ themes|length }}</p>
+                <p class="text-sm text-gray-500">Showing</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <i class="fas fa-code text-blue-500 text-2xl mr-3"></i>
+            <div>
+                <p class="text-2xl font-bold text-gray-900">{{ themes|length }}</p>
+                <p class="text-sm text-gray-500">HTML Files</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <form method="GET" class="flex flex-col lg:flex-row lg:items-end lg:space-x-4 space-y-4 lg:space-y-0">
+        <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <div class="relative">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search_query }}"
+                    placeholder="Search templates..."
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select name="category" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        
+        <div class="flex space-x-2">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                <i class="fas fa-filter mr-1"></i>
+                Filter
+            </button>
+            <a href="{% url 'admin_panel:editor_template_list' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                <i class="fas fa-times mr-1"></i>
+                Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Templates Grid -->
+<div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+    {% if themes %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+            {% for theme in themes %}
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 {% if not theme.is_active %}opacity-60{% endif %}">
+                    <!-- Thumbnail Portrait -->
+                    <div class="relative w-full" style="aspect-ratio: 3/4; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        {% if theme.thumbnail %}
+                            <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-white">
+                                <i class="fas fa-file-code text-6xl opacity-50"></i>
+                            </div>
+                        {% endif %}
+                        <!-- Status Badge Overlay -->
+                        <div class="absolute top-2 right-2">
+                            {% if theme.is_active %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white shadow-lg">Active</span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500 text-white shadow-lg">Inactive</span>
+                            {% endif %}
+                        </div>
+                        <!-- Premium Badge -->
+                        {% if theme.is_premium %}
+                        <div class="absolute top-2 left-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500 text-white shadow-lg">
+                                <i class="fas fa-crown mr-1"></i>Premium
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Card Content -->
+                    <div class="p-4">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-1 truncate" title="{{ theme.name }}">
+                            {{ theme.name }}
+                        </h3>
+                        <p class="text-xs text-gray-500 mb-2 truncate">
+                            {{ theme.slug }}
+                        </p>
+                        
+                        <!-- Category Info -->
+                        <div class="mb-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ theme.category.name }}
+                            </span>
+                        </div>
+                        
+                        <!-- HTML File Info -->
+                        <div class="mb-3">
+                            {% if theme.html_file %}
+                                <span class="text-xs text-gray-500">File:</span>
+                                <span class="text-xs text-gray-900 ml-1 truncate block" title="{{ theme.html_file }}">
+                                    <i class="fas fa-file-code mr-1"></i>{{ theme.html_file|truncatechars:20 }}
+                                </span>
+                            {% else %}
+                                <span class="text-xs text-gray-400 italic">No file</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                            <span><i class="fas fa-download mr-1"></i>{{ theme.download_count }}</span>
+                            <span>{{ theme.created_at|date:"d M Y" }}</span>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                {% if theme.html_file %}
+                                    <a href="{% url 'public:theme_preview' theme.slug %}" target="_blank" class="text-green-600 hover:text-green-700 p-2 rounded hover:bg-green-50 transition-colors duration-200" title="Preview">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'admin_panel:editor_template_edit' theme.pk %}" class="text-indigo-600 hover:text-indigo-700 p-2 rounded hover:bg-indigo-50 transition-colors duration-200" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="p-12 text-center">
+            <i class="fas fa-file-code text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-900 mb-2">No Templates Found</h3>
+            <p class="text-gray-500 mb-4">Get started by creating your first template</p>
+            <a href="{% url 'admin_panel:editor_template_edit' 0 %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-flex items-center">
+                <i class="fas fa-plus mr-2"></i>
+                Create Template
+            </a>
+        </div>
+    {% endif %}
+    
+    <!-- Pagination -->
+    {% if themes.has_other_pages %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if themes.has_previous %}
+                <a href="?page={{ themes.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Previous
+                </a>
+            {% endif %}
+            {% if themes.has_next %}
+                <a href="?page={{ themes.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Next
+                </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing <span class="font-medium">{{ themes.start_index }}</span>
+                    to <span class="font-medium">{{ themes.end_index }}</span>
+                    of <span class="font-medium">{{ themes.paginator.count }}</span> results
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if themes.has_previous %}
+                        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                        <a href="?page={{ themes.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    {% endif %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        Page {{ themes.number }} of {{ themes.paginator.num_pages }}
+                    </span>
+                    {% if themes.has_next %}
+                        <a href="?page={{ themes.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                        <a href="?page={{ themes.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% endblock %}
+

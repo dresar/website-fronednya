@@ -1,0 +1,140 @@
+{% extends 'users/base_user.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Invywed{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-4 lg:px-6 lg:py-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-lg md:text-xl lg:text-lg font-bold">Halo, {{ user.first_name|default:user.username }}!</h1>
+            <p class="text-indigo-100 text-xs md:text-xs lg:text-xs mt-1">Selamat datang kembali</p>
+        </div>
+        <div class="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-bell text-base md:text-lg lg:text-base"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="container-responsive py-3 lg:py-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4 mb-4 lg:mb-5">
+        <!-- Total Tamu -->
+        <div class="bg-white rounded-lg lg:rounded-xl shadow-sm p-3 lg:p-3 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-8 h-8 lg:w-9 lg:h-9 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-blue-600 text-sm lg:text-base"></i>
+                </div>
+            </div>
+            <div class="text-xl lg:text-2xl font-bold text-gray-900">{{ stats.total_guests|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Total Tamu</div>
+        </div>
+        
+        <!-- Tamu Hadir -->
+        <div class="bg-white rounded-lg lg:rounded-xl shadow-sm p-3 lg:p-3 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-8 h-8 lg:w-9 lg:h-9 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 text-sm lg:text-base"></i>
+                </div>
+            </div>
+            <div class="text-xl lg:text-2xl font-bold text-gray-900">{{ stats.attending_guests|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Tamu Hadir</div>
+        </div>
+        
+        <!-- Total Ucapan -->
+        <div class="bg-white rounded-lg lg:rounded-xl shadow-sm p-3 lg:p-3 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-8 h-8 lg:w-9 lg:h-9 bg-pink-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-heart text-pink-600 text-sm lg:text-base"></i>
+                </div>
+            </div>
+            <div class="text-xl lg:text-2xl font-bold text-gray-900">{{ stats.total_wishes|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Total Ucapan</div>
+        </div>
+        
+        <!-- Countdown -->
+        <div class="bg-white rounded-lg lg:rounded-xl shadow-sm p-3 lg:p-3 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-8 h-8 lg:w-9 lg:h-9 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-purple-600 text-sm lg:text-base"></i>
+                </div>
+            </div>
+            <div class="text-xl lg:text-2xl font-bold text-gray-900" id="countdown-days">{{ stats.days_until_event|default:"-" }}</div>
+            <div class="text-xs text-gray-500 mt-1">Hari Menuju Acara</div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm p-3 lg:p-4 border border-gray-100 mb-4 lg:mb-5">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-2 lg:mb-3">Aksi Cepat</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 lg:gap-3">
+            <a href="{% url 'users:wedding_data_form' %}" class="flex items-center p-2.5 lg:p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+                <i class="fas fa-edit text-indigo-600 mr-2 lg:mr-3 text-sm"></i>
+                <span class="text-xs lg:text-sm font-medium text-gray-900">Isi Data</span>
+            </a>
+            <a href="{% url 'users:guest_manager' %}" class="flex items-center p-2.5 lg:p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                <i class="fas fa-user-plus text-green-600 mr-2 lg:mr-3 text-sm"></i>
+                <span class="text-xs lg:text-sm font-medium text-gray-900">Tambah Tamu</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-100">
+        <div class="p-3 lg:p-4 border-b border-gray-100">
+            <h3 class="text-sm lg:text-base font-semibold text-gray-900">Aktivitas Terbaru</h3>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% if recent_activities %}
+                {% for activity in recent_activities %}
+                <div class="p-3 lg:p-3.5 flex items-center space-x-2 lg:space-x-3">
+                    <div class="w-9 h-9 lg:w-10 lg:h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-indigo-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs lg:text-sm font-medium text-gray-900">{{ activity.guest_name }}</p>
+                        <p class="text-xs text-gray-500">{{ activity.activity_text }}</p>
+                    </div>
+                    <div class="text-xs text-gray-400 whitespace-nowrap">
+                        {{ activity.timestamp|timesince }} yang lalu
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="p-6 lg:p-8 text-center">
+                    <i class="fas fa-inbox text-3xl lg:text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-xs lg:text-sm text-gray-500">Belum ada aktivitas</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Countdown calculation (if main_event exists)
+    {% if main_event %}
+    function updateCountdown() {
+        const eventDate = new Date('{{ main_event.event_date|date:"Y-m-d" }}');
+        const today = new Date();
+        const diffTime = eventDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        const countdownEl = document.getElementById('countdown-days');
+        if (countdownEl) {
+            if (diffDays > 0) {
+                countdownEl.textContent = diffDays;
+            } else if (diffDays === 0) {
+                countdownEl.textContent = 'Hari ini!';
+            } else {
+                countdownEl.textContent = 'Selesai';
+            }
+        }
+    }
+    updateCountdown();
+    {% endif %}
+</script>
+{% endblock %}
+

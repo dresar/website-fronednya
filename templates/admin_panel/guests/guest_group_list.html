@@ -1,0 +1,91 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Guest Groups - Invywed Admin{% endblock %}
+{% block page_title %}Guest Groups{% endblock %}
+{% block page_subtitle %}Manage guest groups and categories{% endblock %}
+
+{% block content %}
+<!-- Search & Filter -->
+<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="md:col-span-2">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search groups..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+            <select name="client" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">All Clients</option>
+                {% for client in clients %}
+                    <option value="{{ client.id }}" {% if client_filter == client.id|stringformat:"s" %}selected{% endif %}>{{ client.user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                <i class="fas fa-search mr-2"></i>Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Groups List -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for group in groups %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ group.group_name }}</h3>
+                <p class="text-sm text-gray-500">{{ group.client.user.username }}</p>
+            </div>
+            <div class="w-4 h-4 rounded-full" style="background-color: {{ group.color_code }}"></div>
+        </div>
+        
+        {% if group.description %}
+            <p class="text-sm text-gray-600 mb-4">{{ group.description|truncatewords:20 }}</p>
+        {% endif %}
+        
+        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+            <span><i class="fas fa-tag mr-1"></i>{{ group.get_group_type_display }}</span>
+            {% if group.max_capacity %}
+                <span><i class="fas fa-users mr-1"></i>Max: {{ group.max_capacity }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+            <span class="text-xs text-gray-500">{{ group.created_at|date:"d M Y" }}</span>
+            <span class="px-2 py-1 text-xs font-medium rounded-full {% if group.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                {% if group.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+        <i class="fas fa-layer-group text-4xl mb-4 text-gray-300"></i>
+        <p class="text-lg font-medium text-gray-500">No groups found</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} groups
+        </div>
+        <div class="flex space-x-2">
+            {% if has_previous %}
+                <a href="?page={{ previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if client_filter %}&client={{ client_filter }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Previous
+                </a>
+            {% endif %}
+            {% if has_next %}
+                <a href="?page={{ next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if client_filter %}&client={{ client_filter }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Next
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

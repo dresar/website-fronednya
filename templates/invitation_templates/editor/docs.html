@@ -1,0 +1,406 @@
+{% extends 'invitation_templates/editor/base.html' %}
+
+{% block title %}Tutorial Editor: {{ theme.name }}{% endblock %}
+{% block page_title %}Tutorial Editor{% endblock %}
+{% block page_subtitle %}Panduan lengkap menggunakan editor template untuk "{{ theme.name }}"{% endblock %}
+
+{% block content %}
+<div class="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="space-y-1">
+        <h2 class="text-base sm:text-lg font-semibold text-gray-900">Dokumentasi Editor Template</h2>
+        <p class="text-xs sm:text-sm text-gray-500">Tema: <span class="font-medium text-gray-800">{{ theme.name }}</span> (slug: <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{{ theme.slug }}</code>)</p>
+    </div>
+    <a href="{% url 'invitation_templates:template_editor' theme.slug %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+        <i class="fas fa-code mr-2"></i>
+        <span>Kembali ke Editor</span>
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <!-- Ringkasan Cepat -->
+    <div class="lg:col-span-1 space-y-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                <i class="fas fa-info-circle text-indigo-500 mr-2"></i>Ringkasan Cepat
+            </h3>
+            <ul class="text-xs sm:text-sm text-gray-700 space-y-2 list-disc list-inside">
+                <li><strong>Folder template:</strong> <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">media/templates_html/{% templatetag openvariable %} theme.slug {% templatetag closevariable %}/</code></li>
+                <li><strong>File HTML utama:</strong> <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">index.html</code> (tab HTML)</li>
+                <li><strong>File CSS otomatis:</strong> <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">style1.css, style2.css, ...</code> (tab CSS)</li>
+                <li><strong>File JS otomatis:</strong> <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">script1.js, script2.js, ...</code> (tab JavaScript)</li>
+                <li><strong>Folder gambar:</strong> <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">images/</code> (tab Images)</li>
+            </ul>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                <i class="fas fa-link text-green-500 mr-2"></i>URL Penting
+            </h3>
+            <div class="space-y-2 text-xs sm:text-sm text-gray-700">
+                <div>
+                    <p class="font-semibold">Editor untuk tema ini:</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs break-all">{{ editor_url }}</code>
+                </div>
+                <div>
+                    <p class="font-semibold">Preview HTML publik (tanpa data undangan):</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs break-all">{{ preview_url }}</code>
+                </div>
+                <p class="text-[11px] text-gray-500 mt-1">Catatan: preview publik hanya menampilkan HTML/CSS/JS statis, tanpa data mempelai/tamu.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutorial Utama -->
+    <div class="lg:col-span-2 space-y-4">
+        <!-- 1. Struktur File & Koneksi CSS/JS -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 space-y-3">
+            <h3 class="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs mr-2">1</span>
+                Struktur File & Koneksi Otomatis CSS / JavaScript
+            </h3>
+            <p class="text-xs sm:text-sm text-gray-700">
+                Editor ini <strong>secara otomatis</strong> menghubungkan semua file <code>.css</code> dan <code>.js</code> yang ada di folder tema.
+                Anda <strong>tidak perlu</strong> menambahkan tag <code>&lt;link&gt;</code> atau <code>&lt;script&gt;</code> manual di <code>index.html</code>.
+            </p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4 text-xs sm:text-sm text-gray-800 space-y-2">
+                <p class="font-semibold">Struktur folder tema:</p>
+                <pre class="bg-white rounded-md border border-gray-200 p-2 overflow-auto text-[11px] sm:text-xs leading-snug">
+media/
+└── templates_html/
+    └── {% templatetag openvariable %} theme.slug {% templatetag closevariable %}/
+        ├── index.html          ← HTML utama (tab HTML)
+        ├── style1.css          ← CSS pertama (tab CSS)
+        ├── style2.css          ← CSS kedua (opsional)
+        ├── script1.js          ← JS pertama (tab JavaScript)
+        ├── script2.js          ← JS kedua (opsional)
+        └── images/             ← Folder semua gambar tema
+                </pre>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>Semua file <code>style*.css</code> akan disuntik otomatis ke dalam tag <code>&lt;style&gt;</code> di bagian <code>&lt;head&gt;</code>.</li>
+                    <li>Semua file <code>script*.js</code> akan disuntik otomatis ke sebelum tag <code>&lt;/body&gt;</code>.</li>
+                    <li>Urutan file ditentukan oleh angka di nama file (style1.css, style2.css, ...).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 2. Cara Menggunakan Tab HTML / CSS / JS -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 space-y-3">
+            <h3 class="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs mr-2">2</span>
+                Cara Menggunakan Editor (HTML, CSS, JavaScript)
+            </h3>
+            <ol class="list-decimal list-inside text-xs sm:text-sm text-gray-700 space-y-2">
+                <li><strong>Tab HTML</strong>: edit seluruh konten undangan di <code>index.html</code>. Di sinilah Anda menaruh struktur HTML dan kode Django template.</li>
+                <li><strong>Tab CSS</strong>:
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Pilih file dari dropdown (misalnya <code>style1.css</code>, <code>style2.css</code>).</li>
+                        <li>Gunakan tombol <strong>Add CSS</strong> untuk meng-upload file baru. File baru otomatis menjadi <code>styleN.css</code>.</li>
+                    </ul>
+                </li>
+                <li><strong>Tab JavaScript</strong>:
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Pilih file dari dropdown (misalnya <code>script1.js</code>, <code>script2.js</code>).</li>
+                        <li>Gunakan tombol <strong>Add JS</strong> untuk meng-upload file baru. File baru otomatis menjadi <code>scriptN.js</code>.</li>
+                    </ul>
+                </li>
+                <li><strong>Save All</strong>: menyimpan <code>index.html</code>, semua CSS, dan semua JS sekaligus. File akan dinormalisasi menjadi <code>style1.css</code>, <code>style2.css</code>, <code>script1.js</code>, dst.</li>
+                <li><strong>Validate</strong>: mengecek variabel Django yang digunakan di HTML (apakah sesuai daftar variabel yang tersedia).</li>
+            </ol>
+        </section>
+
+        <!-- 3. Cara Menggunakan Gambar -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 space-y-3">
+            <h3 class="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs mr-2">3</span>
+                Cara Menggunakan Gambar (Tab Images)
+            </h3>
+            <ol class="list-decimal list-inside text-xs sm:text-sm text-gray-700 space-y-2">
+                <li>Buka tab <strong>Images</strong> di editor.</li>
+                <li>Gunakan tombol <strong>Upload</strong> untuk menambahkan satu atau beberapa gambar ke folder <code>images/</code>.</li>
+                <li>Setelah upload, setiap kartu gambar memiliki:
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li><strong>Copy Code</strong>: menyalin kode <code>&lt;img&gt;</code> siap pakai.</li>
+                        <li><strong>Delete</strong>: menghapus file dari folder <code>images/</code>.</li>
+                    </ul>
+                </li>
+            </ol>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4 text-xs sm:text-sm text-gray-800 space-y-2">
+                <p class="font-semibold">Contoh pemakaian di HTML:</p>
+                <pre class="bg-white rounded-md border border-gray-200 p-2 overflow-auto text-[11px] sm:text-xs leading-snug">
+&lt;!-- Contoh 1: Gambar langsung --&gt;
+&lt;img src="/media/templates_html/{% templatetag openvariable %} theme.slug {% templatetag closevariable %}/images/hero.jpg" alt="Hero"&gt;
+
+&lt;!-- Contoh 2: Gambar sebagai background section --&gt;
+&lt;section style="background-image: url('/media/templates_html/{% templatetag openvariable %} theme.slug {% templatetag closevariable %}/images/background.jpg');"&gt;
+    ...
+&lt;/section&gt;</pre>
+                <p class="text-[11px] text-gray-500">
+                    Tip: lebih mudah gunakan tombol <strong>Copy Code</strong> di tab Images, lalu paste ke editor HTML.
+                </p>
+            </div>
+        </section>
+
+        <!-- 4. Variabel Django yang Tersedia -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 space-y-3">
+            <h3 class="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs mr-2">4</span>
+                Variabel Django yang Bisa Dipakai di Template
+            </h3>
+            <p class="text-xs sm:text-sm text-gray-700">
+                Berikut ringkasan variabel yang bisa dipakai di <code>index.html</code>. Daftar lengkap bisa dibuka juga dari tombol <strong>Variables</strong> di editor.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-800">
+                <div class="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                    <h4 class="font-semibold text-gray-900 mb-2">Contoh dasar:</h4>
+                    <pre class="bg-white rounded-md border border-gray-200 p-2 overflow-auto text-[11px] sm:text-xs leading-snug">
+&lt;!-- Nama mempelai --&gt;
+&lt;h1&gt;{% templatetag openvariable %} groom.full_name {% templatetag closevariable %} &amp; {% templatetag openvariable %} bride.full_name {% templatetag closevariable %}&lt;/h1&gt;
+
+&lt;!-- Tanggal acara akad --&gt;
+&lt;p&gt;Akad: {% templatetag openvariable %} event.akad.event_date {% templatetag closevariable %} pukul {% templatetag openvariable %} event.akad.start_time {% templatetag closevariable %}&lt;/p&gt;
+
+&lt;!-- Alamat venue --&gt;
+&lt;p&gt;Lokasi: {% templatetag openvariable %} event.akad.venue_name {% templatetag closevariable %} - {% templatetag openvariable %} event.akad.venue_address {% templatetag closevariable %}&lt;/p&gt;</pre>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                    <h4 class="font-semibold text-gray-900 mb-2">Loop gallery, story & wishes:</h4>
+                    <pre class="bg-white rounded-md border border-gray-200 p-2 overflow-auto text-[11px] sm:text-xs leading-snug">
+&lt;!-- Galeri foto --&gt;
+{% templatetag openblock %} for photo in photo_gallery {% templatetag closeblock %}
+    &lt;img src="{% templatetag openvariable %} photo.image.url {% templatetag closevariable %}" alt="{% templatetag openvariable %} photo.caption {% templatetag closevariable %}"&gt;
+{% templatetag openblock %} endfor {% templatetag closeblock %}
+
+&lt;!-- Love story timeline --&gt;
+{% templatetag openblock %} for story in love_stories {% templatetag closeblock %}
+    &lt;div class="story-item"&gt;
+        &lt;h3&gt;{% templatetag openvariable %} story.title {% templatetag closevariable %}&lt;/h3&gt;
+        &lt;p&gt;{% templatetag openvariable %} story.date {% templatetag closevariable %}&lt;/p&gt;
+        &lt;p&gt;{% templatetag openvariable %} story.description {% templatetag closevariable %}&lt;/p&gt;
+    &lt;/div&gt;
+{% templatetag openblock %} endfor {% templatetag closeblock %}
+
+&lt;!-- Wedding Wishes --&gt;
+&lt;div id="wishes_wrapper"&gt;
+    {% templatetag openblock %} if wishes {% templatetag closeblock %}
+        {% templatetag openblock %} for wish in wishes {% templatetag closeblock %}
+        &lt;div class="wish-item"&gt;
+            &lt;h6&gt;{% templatetag openvariable %} wish.name {% templatetag closevariable %}&lt;/h6&gt;
+            {% templatetag openblock %} if wish.address {% templatetag closeblock %}
+            &lt;p&gt;{% templatetag openvariable %} wish.address {% templatetag closevariable %}&lt;/p&gt;
+            {% templatetag openblock %} endif {% templatetag closeblock %}
+            &lt;p&gt;{% templatetag openvariable %} wish.comment {% templatetag closevariable %}&lt;/p&gt;
+            {% templatetag openblock %} if wish.image {% templatetag closeblock %}
+            &lt;img src="{% templatetag openvariable %} wish.image {% templatetag closevariable %}" alt="{% templatetag openvariable %} wish.name {% templatetag closevariable %}"&gt;
+            {% templatetag openblock %} endif {% templatetag closeblock %}
+        &lt;/div&gt;
+        {% templatetag openblock %} endfor {% templatetag closeblock %}
+    {% templatetag openblock %} else {% templatetag closeblock %}
+        &lt;p&gt;Belum ada ucapan.&lt;/p&gt;
+    {% templatetag openblock %} endif {% templatetag closeblock %}
+&lt;/div&gt;</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Prompt AI yang Disarankan -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 space-y-3">
+            <h3 class="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs mr-2">5</span>
+                Prompt AI yang Disarankan
+            </h3>
+            <p class="text-xs sm:text-sm text-gray-700">
+                Anda bisa menggunakan prompt ini saat meminta AI untuk mengubah HTML statis menjadi HTML yang sudah terhubung dengan variabel Django dan struktur editor ini.
+                Cukup ganti <strong>[NAMA TEMA]</strong> dan paste HTML Anda di bagian yang disediakan.
+            </p>
+            <textarea class="w-full border border-gray-300 rounded-lg p-3 text-[11px] sm:text-xs font-mono text-gray-800 bg-gray-50" rows="20" readonly onclick="this.select()">Saya punya sistem editor template undangan digital berbasis Django dengan spesifikasi berikut:
+
+=== STRUKTUR FOLDER ===
+- Setiap tema disimpan di: media/templates_html/{{ theme.slug }}/
+- HTML utama: index.html (di folder tema)
+- CSS files: File CSS disimpan di lokasi static/templates/{{ theme.slug }}/
+  {% if css_files_list %}
+  File CSS yang ada:
+  {% for css_file in css_files_list %}
+  - {{ forloop.counter }}. {{ css_file.filename }}
+  {% endfor %}
+  Lokasi CSS: static/templates/{{ theme.slug }}/
+  Total file CSS: {{ css_files_list|length }}
+  {% else %}
+  File CSS: Belum ada file CSS di lokasi static/templates/{{ theme.slug }}/
+  {% endif %}
+- JS files: File JavaScript disimpan di lokasi static/templates/{{ theme.slug }}/
+  {% if js_files_list %}
+  File JavaScript yang ada:
+  {% for js_file in js_files_list %}
+  - {{ forloop.counter }}. {{ js_file.filename }}
+  {% endfor %}
+  Lokasi JS: static/templates/{{ theme.slug }}/
+  Total file JS: {{ js_files_list|length }}
+  {% else %}
+  File JavaScript: Belum ada file JS di lokasi static/templates/{{ theme.slug }}/
+  {% endif %}
+- Gambar statis: media/templates_html/{{ theme.slug }}/images/ (panggil manual di HTML dengan path /media/templates_html/{{ theme.slug }}/images/)
+
+=== PENTING TENTANG CSS DAN JS ===
+- File CSS dan JS HARUS ditambahkan dengan tag &lt;link&gt; dan &lt;script&gt; menggunakan {% templatetag openblock %} load static {% templatetag closeblock %} dan {% templatetag openvariable %} static {% templatetag closevariable %} tag
+- Tambahkan {% templatetag openblock %} load static {% templatetag closeblock %} di bagian atas template
+- Gunakan format: &lt;link rel="stylesheet" href="{% templatetag openvariable %} static 'templates/{{ theme.slug }}/style1.css' {% templatetag closevariable %}"&gt;
+- Gunakan format: &lt;script src="{% templatetag openvariable %} static 'templates/{{ theme.slug }}/script1.js' {% templatetag closevariable %}"&gt;&lt;/script&gt;
+- Urutan file ditentukan oleh angka di nama file (style1.css, style2.css, script1.js, script2.js, dst)
+- TAMBAHKAN SEMUA file CSS dan JS yang ada dengan tag &lt;link&gt; dan &lt;script&gt; sesuai urutan nomor file
+
+=== ATURAN KONVERSI HTML STATIS KE DJANGO TEMPLATE ===
+
+1. VARIABEL GROOM (Mempelai Pria):
+   - {% templatetag openvariable %} groom.full_name {% templatetag closevariable %} → Nama lengkap
+   - {% templatetag openvariable %} groom.nickname {% templatetag closevariable %} → Nama panggilan
+   - {% templatetag openvariable %} groom.father_name {% templatetag closevariable %} → Nama ayah
+   - {% templatetag openvariable %} groom.mother_name {% templatetag closevariable %} → Nama ibu
+   - {% templatetag openvariable %} groom.child_order {% templatetag closevariable %} → Anak ke-
+   - {% templatetag openvariable %} groom.main_photo {% templatetag closevariable %} → Foto utama (jika ada)
+
+2. VARIABEL BRIDE (Mempelai Wanita):
+   - {% templatetag openvariable %} bride.full_name {% templatetag closevariable %} → Nama lengkap
+   - {% templatetag openvariable %} bride.nickname {% templatetag closevariable %} → Nama panggilan
+   - {% templatetag openvariable %} bride.father_name {% templatetag closevariable %} → Nama ayah
+   - {% templatetag openvariable %} bride.mother_name {% templatetag closevariable %} → Nama ibu
+   - {% templatetag openvariable %} bride.child_order {% templatetag closevariable %} → Anak ke-
+   - {% templatetag openvariable %} bride.main_photo {% templatetag closevariable %} → Foto utama (jika ada)
+
+3. VARIABEL EVENT (Acara Pernikahan):
+   Acara Akad:
+   - {% templatetag openvariable %} event.akad.event_name {% templatetag closevariable %} → Nama acara akad
+   - {% templatetag openvariable %} event.akad.event_date {% templatetag closevariable %} → Tanggal akad
+   - {% templatetag openvariable %} event.akad.start_time {% templatetag closevariable %} → Waktu mulai
+   - {% templatetag openvariable %} event.akad.end_time {% templatetag closevariable %} → Waktu selesai
+   - {% templatetag openvariable %} event.akad.venue_name {% templatetag closevariable %} → Nama venue
+   - {% templatetag openvariable %} event.akad.venue_address {% templatetag closevariable %} → Alamat venue
+   - {% templatetag openvariable %} event.akad.google_maps_url {% templatetag closevariable %} → Link Google Maps
+   
+   Acara Reception (jika ada):
+   - {% templatetag openvariable %} event.reception.event_name {% templatetag closevariable %} → Nama acara reception
+   - {% templatetag openvariable %} event.reception.event_date {% templatetag closevariable %} → Tanggal reception
+   - {% templatetag openvariable %} event.reception.venue_name {% templatetag closevariable %} → Nama venue
+   - {% templatetag openvariable %} event.reception.venue_address {% templatetag closevariable %} → Alamat venue
+   - {% templatetag openvariable %} event.reception.google_maps_url {% templatetag closevariable %} → Link Google Maps
+   
+   Catatan: Gunakan {% templatetag openblock %} if event.reception {% templatetag closeblock %} untuk cek apakah ada reception.
+
+4. PHOTO GALLERY (Galeri Foto - Loop):
+   {% templatetag openblock %} for photo in photo_gallery {% templatetag closeblock %}
+       &lt;img src="{% templatetag openvariable %} photo.image.url {% templatetag closevariable %}" alt="{% templatetag openvariable %} photo.caption {% templatetag closevariable %}"&gt;
+       &lt;p&gt;{% templatetag openvariable %} photo.caption {% templatetag closevariable %}&lt;/p&gt;
+   {% templatetag openblock %} endfor {% templatetag closeblock %}
+   
+   Field tersedia: photo.image.url, photo.caption, photo.order
+
+5. LOVE STORIES (Kisah Cinta - Loop):
+   {% templatetag openblock %} for story in love_stories {% templatetag closeblock %}
+       &lt;div class="story-item"&gt;
+           &lt;h3&gt;{% templatetag openvariable %} story.title {% templatetag closevariable %}&lt;/h3&gt;
+           &lt;p class="date"&gt;{% templatetag openvariable %} story.date {% templatetag closevariable %}&lt;/p&gt;
+           &lt;p&gt;{% templatetag openvariable %} story.description {% templatetag closevariable %}&lt;/p&gt;
+           {% templatetag openblock %} if story.image {% templatetag closeblock %}
+               &lt;img src="{% templatetag openvariable %} story.image.url {% templatetag closevariable %}" alt="{% templatetag openvariable %} story.title {% templatetag closevariable %}"&gt;
+           {% templatetag openblock %} endif {% templatetag closeblock %}
+       &lt;/div&gt;
+   {% templatetag openblock %} endfor {% templatetag closeblock %}
+   
+   Field tersedia: story.title, story.date, story.description, story.image.url, story.order
+
+6. GUEST NAME (Nama Tamu - Opsional):
+   {% templatetag openblock %} if guest_name {% templatetag closeblock %}
+       &lt;p&gt;Kepada Yth. {% templatetag openvariable %} guest_name {% templatetag closevariable %}&lt;/p&gt;
+   {% templatetag openblock %} endif {% templatetag closeblock %}
+
+7. WEDDING WISHES (Ucapan/Doa dari Tamu - Loop):
+   - Wishes disimpan dalam format list dari database
+   - Untuk preview template: gunakan wishes dari TemplateWish (default wishes untuk testing)
+   - Untuk undangan real: gunakan wishes dari InvitationWish (wishes real dari tamu)
+   - Form wishes hanya aktif untuk undangan real, dinonaktifkan untuk preview template
+   
+   Contoh implementasi:
+   &lt;div id="wishes_wrapper"&gt;
+       {% templatetag openblock %} if wishes {% templatetag closeblock %}
+           {% templatetag openblock %} for wish in wishes {% templatetag closeblock %}
+           &lt;div class="wish-item"&gt;
+               &lt;h6&gt;{% templatetag openvariable %} wish.name {% templatetag closevariable %}&lt;/h6&gt;
+               {% templatetag openblock %} if wish.address {% templatetag closeblock %}
+               &lt;p&gt;{% templatetag openvariable %} wish.address {% templatetag closevariable %}&lt;/p&gt;
+               {% templatetag openblock %} endif {% templatetag closeblock %}
+               &lt;p&gt;{% templatetag openvariable %} wish.comment {% templatetag closevariable %}&lt;/p&gt;
+               {% templatetag openblock %} if wish.image {% templatetag closeblock %}
+               &lt;img src="{% templatetag openvariable %} wish.image {% templatetag closevariable %}" alt="{% templatetag openvariable %} wish.name {% templatetag closevariable %}"&gt;
+               {% templatetag openblock %} endif {% templatetag closeblock %}
+           &lt;/div&gt;
+           {% templatetag openblock %} endfor {% templatetag closeblock %}
+       {% templatetag openblock %} else {% templatetag closeblock %}
+           &lt;p&gt;Belum ada ucapan.&lt;/p&gt;
+       {% templatetag openblock %} endif {% templatetag closeblock %}
+   &lt;/div&gt;
+   
+   Field tersedia: wish.name, wish.address, wish.comment, wish.image, wish.submitted_at
+   
+   CATATAN:
+   - Form wishes harus memiliki id="guestbook_form" dan onsubmit="return false;"
+   - Form harus memiliki {% templatetag openblock %} csrf_token {% templatetag closeblock %}
+   - Form harus memiliki input dengan name="name", name="alamat", name="comment", dan name="image" (opsional)
+   - Form harus memiliki button dengan id="guestbook_submit_btn" dan type="submit"
+   - Form harus memiliki div dengan id="wish_message" untuk feedback
+   - JavaScript AJAX akan menangani submit tanpa reload
+
+8. GAMBAR STATIS (Gambar dari folder images/ tema):
+   PENTING: Semua gambar statis harus menggunakan path dengan {% templatetag openvariable %} theme.slug {% templatetag closevariable %} agar otomatis menyesuaikan dengan slug tema.
+   
+   Contoh penggunaan:
+   - Gambar langsung:
+     &lt;img src="/media/templates_html/{% templatetag openvariable %} theme.slug {% templatetag closevariable %}/images/hero.jpg" alt="Hero Image"&gt;
+   
+   - Background image:
+     &lt;section style="background-image: url('/media/templates_html/{% templatetag openvariable %} theme.slug {% templatetag closevariable %}/images/bg-pattern.jpg');"&gt;
+   
+   - Background dengan CSS:
+     .hero { background-image: url('/media/templates_html/{% templatetag openvariable %} theme.slug {% templatetag closevariable %}/images/hero-bg.jpg'); }
+   
+   - Icon atau asset kecil:
+     &lt;img src="/media/templates_html/{% templatetag openvariable %} theme.slug {% templatetag closevariable %}/images/icon-heart.png" alt="Heart Icon"&gt;
+
+8. LARANGAN PENTING:
+   - JANGAN tambahkan &lt;link rel="stylesheet"&gt; untuk CSS internal tema (style1.css, style2.css, dll)
+   - JANGAN tambahkan &lt;script src="..."&gt; untuk JS internal tema (script1.js, script2.js, dll)
+   - CSS dan JS internal akan disuntik otomatis oleh sistem dari lokasi yang sudah disebutkan di atas
+   - Boleh menggunakan CDN eksternal (Bootstrap, Font Awesome, dll) jika diperlukan
+
+9. STRUKTUR HTML YANG DIHARAPKAN:
+   - Pastikan ada tag &lt;head&gt; dan &lt;body&gt;
+   - CSS akan disuntik di &lt;head&gt;
+   - JS akan disuntik sebelum &lt;/body&gt;
+   - Gunakan semantic HTML yang baik
+
+=== TEMA YANG SEDANG DIKERJAKAN ===
+Nama Tema: {{ theme.name }}
+Slug Tema: {{ theme.slug }}
+Path Gambar: /media/templates_html/{{ theme.slug }}/images/
+
+=== HTML STATIS YANG PERLU DI-CONVERT ===
+--- MULAI HTML ---
+[PASTE HTML STATIS ANDA DI SINI]
+--- SELESAI HTML ---
+
+=== INSTRUKSI ===
+Tolong konversi HTML statis di atas menjadi template Django dengan:
+1. Ganti semua teks hardcode (nama, tanggal, lokasi) dengan variabel Django yang sesuai
+2. Ganti semua path gambar statis dengan path yang menggunakan {% templatetag openvariable %} theme.slug {% templatetag closevariable %}
+3. Implementasikan loop untuk photo_gallery, love_stories, dan wishes jika ada di HTML
+4. Hapus semua &lt;link&gt; dan &lt;script&gt; untuk CSS/JS internal tema (file CSS/JS akan disuntik otomatis dari lokasi yang sudah disebutkan)
+5. Pastikan struktur HTML tetap rapi dan semantic
+6. Hasilkan hanya isi file index.html (tanpa DOCTYPE jika sudah ada di HTML yang di-paste, atau tambahkan jika belum ada)
+
+Hasilkan kode HTML Django template yang lengkap dan siap digunakan.</textarea>
+            <p class="text-[11px] text-gray-500 mt-1">Tip: klik textarea di atas lalu tekan <kbd>Ctrl+A</kbd> &amp; <kbd>Ctrl+C</kbd> untuk menyalin seluruh prompt.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'Against';
+    src: url('../fonts/against-regular.eot');
+    src: url('../fonts/against-regular.eot#iefix') format('embedded-opentype'),
+         url('../fonts/against-regular.woff2') format('woff2'),
+         url('../fonts/against-regular.woff') format('woff'),
+         url('../fonts/against-regular.ttf')  format('truetype'),
+         url('../images/against-regular.svg#against') format('svg');
+}

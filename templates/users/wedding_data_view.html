@@ -1,0 +1,335 @@
+{% extends 'users/base_user.html' %}
+{% load static %}
+
+{% block title %}Data Mempelai - Invywed{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+    <div class="px-4 py-2.5 lg:px-6 lg:py-3 flex items-center justify-between">
+        <div>
+            <h1 class="text-base md:text-lg lg:text-base font-bold text-gray-900">Data Mempelai & Acara</h1>
+            <p class="text-xs text-gray-500 mt-0.5">Informasi pernikahan Anda</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            {% if invitation and invitation.invitation_slug %}
+            <a href="{% url 'admin_panel:invitation_preview' invitation.invitation_slug %}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center">
+                <i class="fas fa-eye mr-1.5"></i>
+                <span class="hidden sm:inline">Preview</span>
+            </a>
+            {% elif client_profile.selected_theme %}
+            <button onclick="alert('Slug undangan belum tersedia. Harap lengkapi semua data dan simpan terlebih dahulu.');" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center cursor-not-allowed">
+                <i class="fas fa-eye mr-1.5"></i>
+                <span class="hidden sm:inline">Preview</span>
+            </button>
+            {% endif %}
+            <a href="{% url 'users:wedding_data_form' %}?edit=true" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center">
+                <i class="fas fa-edit mr-1.5"></i>
+                <span class="hidden sm:inline">Edit</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Content -->
+<div class="container-responsive py-4 lg:py-6 pb-20 lg:pb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Mempelai Pria -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+            <i class="fas fa-male mr-2 text-indigo-600"></i>
+            Data Mempelai Pria
+        </h3>
+        
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Lengkap</label>
+                <p class="text-sm font-medium text-gray-900 mt-1">{{ groom_info.full_name|default:"-" }}</p>
+            </div>
+            {% if groom_info.nickname %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Panggilan</label>
+                <p class="text-sm text-gray-900 mt-1">{{ groom_info.nickname }}</p>
+            </div>
+            {% endif %}
+            {% if groom_info.child_order %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Putra/Putri Ke-</label>
+                <p class="text-sm text-gray-900 mt-1">{{ groom_info.child_order }}</p>
+            </div>
+            {% endif %}
+            {% if groom_info.father_name %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Ayah</label>
+                <p class="text-sm text-gray-900 mt-1">{{ groom_info.father_name }}</p>
+            </div>
+            {% endif %}
+            {% if groom_info.mother_name %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Ibu</label>
+                <p class="text-sm text-gray-900 mt-1">{{ groom_info.mother_name }}</p>
+            </div>
+            {% endif %}
+            {% if groom_info.main_photo %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Foto Utama</label>
+                <div class="mt-2">
+                    <img src="{{ groom_info.main_photo.url }}" alt="Foto Utama" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Mempelai Wanita -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+            <i class="fas fa-female mr-2 text-pink-600"></i>
+            Data Mempelai Wanita
+        </h3>
+        
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Lengkap</label>
+                <p class="text-sm font-medium text-gray-900 mt-1">{{ bride_info.full_name|default:"-" }}</p>
+            </div>
+            {% if bride_info.nickname %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Panggilan</label>
+                <p class="text-sm text-gray-900 mt-1">{{ bride_info.nickname }}</p>
+            </div>
+            {% endif %}
+            {% if bride_info.child_order %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Putra/Putri Ke-</label>
+                <p class="text-sm text-gray-900 mt-1">{{ bride_info.child_order }}</p>
+            </div>
+            {% endif %}
+            {% if bride_info.father_name %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Ayah</label>
+                <p class="text-sm text-gray-900 mt-1">{{ bride_info.father_name }}</p>
+            </div>
+            {% endif %}
+            {% if bride_info.mother_name %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Ibu</label>
+                <p class="text-sm text-gray-900 mt-1">{{ bride_info.mother_name }}</p>
+            </div>
+            {% endif %}
+            {% if bride_info.main_photo %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Foto Utama</label>
+                <div class="mt-2">
+                    <img src="{{ bride_info.main_photo.url }}" alt="Foto Utama" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    </div>
+    
+    <!-- Acara Akad -->
+    {% if main_event %}
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+            <i class="fas fa-mosque mr-2 text-indigo-600"></i>
+            Acara Akad Nikah
+        </h3>
+        
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Acara</label>
+                <p class="text-sm font-medium text-gray-900 mt-1">{{ main_event.event_name|default:"Akad Nikah" }}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-medium text-gray-500">Tanggal</label>
+                    <p class="text-sm text-gray-900 mt-1">{{ main_event.event_date|date:"d M Y"|default:"-" }}</p>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-gray-500">Jam Mulai</label>
+                    <p class="text-sm text-gray-900 mt-1">{{ main_event.start_time|time:"H:i"|default:"-" }}</p>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Tempat</label>
+                <p class="text-sm text-gray-900 mt-1">{{ main_event.venue_name|default:"-" }}</p>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-gray-500">Alamat Lengkap</label>
+                <p class="text-sm text-gray-900 mt-1">{{ main_event.venue_address|default:"-" }}</p>
+            </div>
+            {% if main_event.google_maps_url %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Link Google Maps</label>
+                <a href="{{ main_event.google_maps_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-700 text-sm mt-1 block">
+                    {{ main_event.google_maps_url|truncatechars:50 }}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    
+    
+    <!-- Acara Resepsi -->
+    {% if reception_event %}
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+            <i class="fas fa-utensils mr-2 text-pink-600"></i>
+            Acara Resepsi
+        </h3>
+        
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Acara</label>
+                <p class="text-sm font-medium text-gray-900 mt-1">{{ reception_event.event_name|default:"Resepsi Pernikahan" }}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-medium text-gray-500">Tanggal</label>
+                    <p class="text-sm text-gray-900 mt-1">{{ reception_event.event_date|date:"d M Y"|default:"-" }}</p>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-gray-500">Jam Mulai</label>
+                    <p class="text-sm text-gray-900 mt-1">{{ reception_event.start_time|time:"H:i"|default:"-" }}</p>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-gray-500">Nama Tempat</label>
+                <p class="text-sm text-gray-900 mt-1">{{ reception_event.venue_name|default:"-" }}</p>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-gray-500">Alamat Lengkap</label>
+                <p class="text-sm text-gray-900 mt-1">{{ reception_event.venue_address|default:"-" }}</p>
+            </div>
+            {% if reception_event.google_maps_url %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Link Google Maps</label>
+                <a href="{{ reception_event.google_maps_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-700 text-sm mt-1 block">
+                    {{ reception_event.google_maps_url|truncatechars:50 }}
+                </a>
+            </div>
+            {% endif %}
+            {% if reception_event.dress_code %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Dress Code</label>
+                <p class="text-sm text-gray-900 mt-1">{{ reception_event.dress_code }}</p>
+            </div>
+            {% endif %}
+            {% if reception_event.adab_walimah %}
+            <div>
+                <label class="text-xs font-medium text-gray-500">Adab Walimah</label>
+                <div class="text-sm text-gray-900 mt-1">{{ reception_event.adab_walimah|safe }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Memorable Moment -->
+    {% if photo_gallery %}
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4 mb-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+            <i class="fas fa-images mr-2 text-purple-600"></i>
+            Memorable Moment
+        </h3>
+        
+        <div class="grid grid-cols-2 gap-3">
+            {% for photo in photo_gallery %}
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                {% if photo.photo %}
+                <img src="{{ photo.photo.url }}" alt="{{ photo.title|default:'Foto' }}" class="w-full h-32 object-cover">
+                {% endif %}
+                <div class="p-2">
+                    {% if photo.title %}
+                    <p class="text-xs font-medium text-gray-900">{{ photo.title }}</p>
+                    {% endif %}
+                    {% if photo.caption %}
+                    <p class="text-xs text-gray-500 mt-1">{{ photo.caption|truncatechars:50 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Our Story -->
+    {% if love_stories %}
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4 mb-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+            <i class="fas fa-heart mr-2 text-red-600"></i>
+            Our Story
+        </h3>
+        
+        <div class="space-y-4">
+            {% for story in love_stories %}
+            <div class="border border-gray-200 rounded-lg p-3">
+                <div class="flex items-start space-x-3">
+                    {% if story.story_photo %}
+                    <div class="flex-shrink-0">
+                        <img src="{{ story.story_photo.url }}" alt="{{ story.title }}" class="w-20 h-20 object-cover rounded-lg">
+                    </div>
+                    {% endif %}
+                    <div class="flex-1">
+                        <h4 class="text-sm font-semibold text-gray-900">{{ story.title }}</h4>
+                        {% if story.story_date %}
+                        <p class="text-xs text-gray-500 mt-1">{{ story.story_date|date:"d M Y" }}</p>
+                        {% endif %}
+                        {% if story.story_content %}
+                        <div class="text-xs text-gray-700 mt-2">{{ story.story_content|safe|truncatewords:30 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+
+    
+    <!-- Template Selection Section -->
+    <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4 mb-4">
+        <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+            <i class="fas fa-palette mr-2 text-indigo-600"></i>
+            Template Undangan
+        </h3>
+        
+        {% if client_profile.selected_theme %}
+        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-3">
+            {% if client_profile.selected_theme.thumbnail %}
+            <img src="{{ client_profile.selected_theme.thumbnail.url }}" alt="{{ client_profile.selected_theme.name }}" class="w-16 h-16 object-cover rounded-lg">
+            {% else %}
+            <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                <i class="fas fa-image text-gray-400"></i>
+            </div>
+            {% endif %}
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">Template Terpilih</p>
+                <p class="text-xs text-gray-500">{{ client_profile.selected_theme.name }}</p>
+                <p class="text-xs text-gray-400">{{ client_profile.selected_theme.category.name }}</p>
+            </div>
+        </div>
+        <a href="{% url 'users:select_theme' %}" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg transition-colors duration-200 flex items-center justify-center">
+            <i class="fas fa-edit mr-2"></i>
+            Ubah Template
+        </a>
+        {% else %}
+        <div class="text-center py-6">
+            <i class="fas fa-palette text-4xl text-gray-300 mb-3"></i>
+            <p class="text-sm text-gray-500 mb-4">Belum ada template yang dipilih</p>
+            <a href="{% url 'users:select_theme' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>
+                Pilih Template
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

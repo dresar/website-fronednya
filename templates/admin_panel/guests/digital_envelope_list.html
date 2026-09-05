@@ -1,0 +1,160 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Digital Envelopes - Invywed Admin{% endblock %}
+{% block page_title %}Digital Envelopes{% endblock %}
+{% block page_subtitle %}Manage digital gifts and envelopes{% endblock %}
+
+{% block content %}
+<!-- Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-money-bill-wave text-white text-lg"></i>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-2xl font-bold text-gray-900">Rp {{ total_amount|floatformat:0|default:"0" }}</p>
+                <p class="text-sm text-gray-500">Total Amount</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-envelope text-white text-lg"></i>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-2xl font-bold text-gray-900">{{ page_obj.paginator.count|default:0 }}</p>
+                <p class="text-sm text-gray-500">Total Envelopes</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-white text-lg"></i>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-2xl font-bold text-gray-900">{{ envelopes|length|default:0 }}</p>
+                <p class="text-sm text-gray-500">Verified</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="md:col-span-2">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search by guest name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+            <select name="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">All Types</option>
+                {% for value, label in type_choices %}
+                    <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                <i class="fas fa-search mr-2"></i>Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Envelopes List -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount/Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Received By</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Received At</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for envelope in envelopes %}
+                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ envelope.guest.full_name }}</div>
+                        <div class="text-sm text-gray-500">{{ envelope.guest.client.user.username }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
+                            {{ envelope.get_envelope_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if envelope.amount %}
+                            <p class="text-sm font-medium text-green-600">Rp {{ envelope.amount|floatformat:0 }}</p>
+                        {% else %}
+                            <p class="text-sm text-gray-900">{{ envelope.gift_description|default:"-" }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ envelope.received_by.username|default:"-" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ envelope.received_at|date:"d M Y, H:i" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if envelope.is_verified %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                <i class="fas fa-check mr-1"></i>Verified
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                                Pending
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <i class="fas fa-envelope text-4xl mb-4 text-gray-300"></i>
+                        <p class="text-lg font-medium">No envelopes found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} envelopes
+            </div>
+            <div class="flex space-x-2">
+                {% if has_previous %}
+                    <a href="?page={{ previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                {% if has_next %}
+                    <a href="?page={{ next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

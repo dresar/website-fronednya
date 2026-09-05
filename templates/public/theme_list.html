@@ -1,0 +1,457 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block title %}Semua Tema Undangan - Invywed{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Theme Card Animations */
+    .theme-card {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+        animation: fadeInUpScale 0.6s ease-out forwards;
+    }
+    
+    .theme-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(147, 51, 234, 0.4);
+    }
+    
+    .theme-card img {
+        transition: transform 0.4s ease;
+    }
+    
+    .theme-card:hover img {
+        transform: scale(1.05);
+    }
+    
+    @keyframes fadeInUpScale {
+        0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        50% {
+            transform: translateY(-5px) scale(1.01);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    /* Button Animation */
+    .theme-card button,
+    .theme-card a {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .theme-card button:active,
+    .theme-card a:active {
+        transform: scale(0.95);
+    }
+    
+    /* Set animation delay via JavaScript will be applied dynamically */
+    
+    /* Category Filter Active State */
+    .category-filter.active {
+        background: linear-gradient(to right, #fbbf24, #f59e0b) !important;
+        color: white !important;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow: auto;
+        position: relative;
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        background: rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 1.25rem;
+        transition: all 0.2s ease;
+        z-index: 10;
+    }
+    
+    .modal-close:hover {
+        background: rgba(0, 0, 0, 0.2);
+        color: #000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="glass border-b sticky top-0 z-50 backdrop-blur-lg" style="border-color: var(--glass-border);">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <a href="{% url 'public_home' %}" class="flex items-center gap-3">
+                    <img src="/media/logo/Logo Brand.png" alt="Invywed Logo" class="h-10 w-auto object-contain">
+                </a>
+            </div>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-4 lg:gap-6">
+                <a href="{% url 'public_home' %}" class="transition-colors text-sm lg:text-base" style="color: var(--text-primary);" onmouseover="this.style.color='#9333EA'" onmouseout="this.style.color='var(--text-primary)'">Home</a>
+                <a href="{% url 'public_theme_list' %}" class="transition-colors font-semibold text-sm lg:text-base" style="color: #9333EA;">Tema</a>
+                <a href="{% url 'public_home' %}#features" class="transition-colors text-sm lg:text-base" style="color: var(--text-primary);" onmouseover="this.style.color='#9333EA'" onmouseout="this.style.color='var(--text-primary)'">Fitur</a>
+                <a href="{% url 'public_home' %}#pricing" class="transition-colors text-sm lg:text-base" style="color: var(--text-primary);" onmouseover="this.style.color='#9333EA'" onmouseout="this.style.color='var(--text-primary)'">Harga</a>
+                <a href="{% url 'users:login' %}" class="px-3 lg:px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all text-sm lg:text-base whitespace-nowrap">
+                    Masuk
+                </a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuBtn" class="md:hidden transition-colors" style="color: var(--text-primary);" onmouseover="this.style.color='#9333EA'" onmouseout="this.style.color='var(--text-primary)'">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden mt-4 pb-4 border-t pt-4" style="border-color: var(--border-color);">
+            <div class="flex flex-col gap-3">
+                <a href="{% url 'public_home' %}" class="transition-colors py-2" style="color: var(--text-primary);" onmouseover="this.style.color='#9333EA'" onmouseout="this.style.color='var(--text-primary)'">Home</a>
+                <a href="{% url 'public_theme_list' %}" class="transition-colors font-semibold py-2" style="color: #9333EA;">Tema</a>
+                <a href="{% url 'public_home' %}#features" class="transition-colors py-2" style="color: var(--text-primary);" onmouseover="this.style.color='#9333EA'" onmouseout="this.style.color='var(--text-primary)'">Fitur</a>
+                <a href="{% url 'public_home' %}#pricing" class="transition-colors py-2" style="color: var(--text-primary);" onmouseover="this.style.color='#9333EA'" onmouseout="this.style.color='var(--text-primary)'">Harga</a>
+                <a href="{% url 'users:login' %}" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all text-center">
+                    Masuk
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Header Section -->
+<section class="py-12 md:py-20">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4" style="color: var(--text-primary);">
+                Semua Tema Undangan
+            </h1>
+            <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
+                Jelajahi koleksi lengkap tema undangan pernikahan kami. Pilih tema favoritmu dan buat undangan digital yang memukau.
+            </p>
+        </div>
+
+        <!-- Category Filters -->
+        {% if categories %}
+        <div class="flex flex-wrap justify-center gap-3 mb-8">
+            <button class="category-filter px-6 py-2 rounded-lg font-semibold transition-all bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg active" data-category="all">
+                Semua
+            </button>
+            {% for category in categories %}
+            <button class="category-filter px-6 py-2 rounded-lg font-semibold transition-all text-white" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-secondary)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'" data-category="{{ category.slug }}">
+                {{ category.name }}
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Themes Grid - Mobile: 2 columns, Desktop: 5 columns -->
+        {% if themes %}
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4" id="themesGrid">
+            {% for theme in themes %}
+            <div class="theme-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 bg-gray-900 border border-gray-800" data-category="{% if theme.category %}{{ theme.category.slug }}{% else %}all{% endif %}" data-theme-id="{{ theme.id }}" data-theme-slug="{{ theme.slug }}" data-theme-name="{{ theme.name }}" data-theme-thumbnail="{% if theme.thumbnail %}{{ theme.thumbnail.url }}{% endif %}" data-animation-index="{{ forloop.counter0 }}">
+                <!-- Theme Preview - Square -->
+                <div class="relative theme-thumbnail-click cursor-pointer">
+                    {% if theme.thumbnail %}
+                        <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="w-full aspect-square object-cover">
+                    {% else %}
+                        <div class="w-full aspect-square bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                            <i class="fas fa-palette text-white text-3xl md:text-4xl opacity-70"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Buttons - Below Image -->
+                <div class="bg-gray-800 p-2 md:p-3">
+                    <div class="grid grid-cols-2 gap-2 md:gap-3">
+                        <a href="{% url 'thema:theme_demo' theme.slug %}" target="_blank" class="flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all text-xs md:text-sm shadow-md hover:shadow-lg">
+                            <i class="fas fa-eye text-xs md:text-sm"></i>
+                            <span>Demo</span>
+                        </a>
+                        <button class="whatsapp-share-btn flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold transition-all text-xs md:text-sm shadow-md hover:shadow-lg" data-theme-slug="{{ theme.slug }}" data-theme-name="{{ theme.name }}">
+                            <i class="fab fa-whatsapp text-xs md:text-sm"></i>
+                            <span>Pesan</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12" id="emptyThemes">
+            <i class="fas fa-palette text-5xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400">Template akan segera hadir</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Modal Preview Thumbnail -->
+<div id="thumbnailModal" class="modal-overlay">
+    <div class="modal-content relative">
+        <button class="modal-close" onclick="closeThumbnailModal()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="p-6">
+            <div id="modalThumbnail" class="mb-4">
+                <img src="" alt="" class="w-full rounded-lg">
+            </div>
+            <div class="text-center">
+                <h3 id="modalThemeName" class="text-2xl font-bold text-gray-900 mb-4"></h3>
+                <div class="flex gap-3 justify-center">
+                    <a id="modalDemoBtn" href="#" target="_blank" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all">
+                        <i class="fas fa-eye mr-2"></i>Demo
+                    </a>
+                    <button id="modalWhatsAppBtn" class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-all">
+                        <i class="fab fa-whatsapp mr-2"></i>Pesan via WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Category Filter with AJAX
+    document.querySelectorAll('.category-filter').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            
+            // Update active state
+            document.querySelectorAll('.category-filter').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show loading
+            const grid = document.getElementById('themesGrid');
+            grid.innerHTML = '<div class="col-span-2 lg:col-span-5 text-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-gray-400"></i></div>';
+            
+            // Fetch themes via AJAX
+            fetch(`/api/themes/filter/?category=${category}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        renderThemes(data.themes);
+                    } else {
+                        grid.innerHTML = '<div class="col-span-2 lg:col-span-5 text-center py-12 text-gray-400">Error loading themes</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    grid.innerHTML = '<div class="col-span-2 lg:col-span-5 text-center py-12 text-gray-400">Error loading themes</div>';
+                });
+        });
+    });
+    
+    // Function to render themes
+    function renderThemes(themes) {
+        const grid = document.getElementById('themesGrid');
+        
+        if (themes.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-2 lg:col-span-5 text-center py-12">
+                    <i class="fas fa-palette text-5xl text-gray-600 mb-4"></i>
+                    <p class="text-gray-400">Tidak ada tema dalam kategori ini</p>
+                </div>
+            `;
+            return;
+        }
+        
+        grid.innerHTML = '';
+        
+        themes.forEach((theme, index) => {
+            const card = createThemeCard(theme, index);
+            grid.appendChild(card);
+        });
+        
+        // Re-attach event listeners
+        attachEventListeners();
+    }
+    
+    // Function to create theme card HTML
+    function createThemeCard(theme, index) {
+        const card = document.createElement('div');
+        card.className = 'theme-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 bg-gray-900 border border-gray-800';
+        card.setAttribute('data-category', theme.category_slug || 'all');
+        card.setAttribute('data-theme-id', theme.id);
+        card.setAttribute('data-theme-slug', theme.slug);
+        card.setAttribute('data-theme-name', theme.name);
+        card.setAttribute('data-theme-thumbnail', theme.thumbnail_url || '');
+        card.setAttribute('data-animation-index', index);
+        // Set animation delay
+        card.style.animationDelay = `${index * 0.05}s`;
+        
+        const thumbnailHtml = theme.thumbnail_url 
+            ? `<img src="${theme.thumbnail_url}" alt="${theme.name}" class="w-full aspect-square object-cover">`
+            : `<div class="w-full aspect-square bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <i class="fas fa-palette text-white text-3xl md:text-4xl opacity-70"></i>
+            </div>`;
+        
+        card.innerHTML = `
+            <div class="relative theme-thumbnail-click cursor-pointer">
+                ${thumbnailHtml}
+            </div>
+            <div class="bg-gray-800 p-2 md:p-3">
+                <div class="grid grid-cols-2 gap-2 md:gap-3">
+                    <a href="${theme.demo_url}" target="_blank" class="flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all text-xs md:text-sm shadow-md hover:shadow-lg">
+                        <i class="fas fa-eye text-xs md:text-sm"></i>
+                        <span>Demo</span>
+                    </a>
+                    <button class="whatsapp-share-btn flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold transition-all text-xs md:text-sm shadow-md hover:shadow-lg" data-theme-slug="${theme.slug}" data-theme-name="${theme.name}">
+                        <i class="fab fa-whatsapp text-xs md:text-sm"></i>
+                        <span>Pesan</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        return card;
+    }
+    
+    // Attach event listeners for thumbnail click and WhatsApp
+    function attachEventListeners() {
+        // Thumbnail click to open modal
+        document.querySelectorAll('.theme-thumbnail-click').forEach(thumbnail => {
+            thumbnail.addEventListener('click', function() {
+                const card = this.closest('.theme-card');
+                const themeName = card.getAttribute('data-theme-name');
+                const themeSlug = card.getAttribute('data-theme-slug');
+                const thumbnailUrl = card.getAttribute('data-theme-thumbnail');
+                const demoUrl = `/demo/${themeSlug}/`;
+                
+                // Update modal content
+                document.getElementById('modalThumbnail').innerHTML = thumbnailUrl 
+                    ? `<img src="${thumbnailUrl}" alt="${themeName}" class="w-full rounded-lg">`
+                    : `<div class="w-full h-64 bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center rounded-lg">
+                        <i class="fas fa-palette text-white text-5xl opacity-70"></i>
+                    </div>`;
+                document.getElementById('modalThemeName').textContent = themeName;
+                document.getElementById('modalDemoBtn').href = demoUrl;
+                document.getElementById('modalWhatsAppBtn').setAttribute('data-theme-slug', themeSlug);
+                document.getElementById('modalWhatsAppBtn').setAttribute('data-theme-name', themeName);
+                
+                // Show modal
+                document.getElementById('thumbnailModal').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+        
+        // WhatsApp share button
+        document.querySelectorAll('.whatsapp-share-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const themeSlug = this.getAttribute('data-theme-slug');
+                const themeName = this.getAttribute('data-theme-name');
+                const demoUrl = `${window.location.origin}/demo/${themeSlug}/`;
+                const message = `Halo! Saya tertarik dengan tema undangan *${themeName}*. Bisa lihat demo di: ${demoUrl}`;
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            });
+        });
+    }
+    
+    // Close modal function
+    function closeThumbnailModal() {
+        document.getElementById('thumbnailModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal on overlay click
+    document.getElementById('thumbnailModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeThumbnailModal();
+        }
+    });
+    
+    // Close modal on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeThumbnailModal();
+        }
+    });
+    
+    // Modal WhatsApp button
+    document.getElementById('modalWhatsAppBtn').addEventListener('click', function() {
+        const themeSlug = this.getAttribute('data-theme-slug');
+        const themeName = this.getAttribute('data-theme-name');
+        const demoUrl = `${window.location.origin}/demo/${themeSlug}/`;
+        const message = `Halo! Saya tertarik dengan tema undangan *${themeName}*. Bisa lihat demo di: ${demoUrl}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    });
+    
+    // Initialize event listeners on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        attachEventListeners();
+        
+        // Set animation delay for initial theme cards
+        document.querySelectorAll('.theme-card[data-animation-index]').forEach((card) => {
+            const animIndex = parseInt(card.getAttribute('data-animation-index')) || 0;
+            card.style.animationDelay = `${animIndex * 0.05}s`;
+        });
+        
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    });
+</script>
+{% endblock %}
+

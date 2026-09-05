@@ -1,0 +1,160 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Theme Management{% endblock %}
+{% block page_title %}Theme Management{% endblock %}
+{% block page_subtitle %}Kelola template tema undangan{% endblock %}
+
+{% block content %}
+<!-- Action Buttons -->
+<div class="mb-4 sm:mb-6 flex justify-between items-center">
+    <div></div>
+    <a href="{% url 'admin_panel:theme_upload' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+        <i class="fas fa-plus mr-2"></i>
+        <span class="hidden sm:inline">Upload Tema Baru</span>
+        <span class="sm:hidden">Upload</span>
+    </a>
+</div>
+
+<!-- Search & Filter -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+    <form method="GET" class="space-y-4 sm:space-y-0 sm:flex sm:items-end sm:space-x-4">
+        <!-- Search -->
+        <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cari Tema</label>
+            <div class="relative">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ current_search }}"
+                    placeholder="Cari nama tema..."
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Filter -->
+        <div class="sm:w-48">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+            <select name="category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">Semua Kategori</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Status Filter -->
+        <div class="sm:w-48">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">Semua Status</option>
+                <option value="active" {% if current_status == 'active' %}selected{% endif %}>Aktif</option>
+                <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Nonaktif</option>
+            </select>
+        </div>
+        
+        <!-- Filter Button -->
+        <div class="flex space-x-2">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fas fa-filter mr-2"></i>Filter
+            </button>
+            {% if current_search or current_category or current_status %}
+            <a href="{% url 'admin_panel:theme_list' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fas fa-times mr-2"></i>Clear
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Themes Grid -->
+{% if themes %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+    {% for theme in themes %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+        <!-- Thumbnail -->
+        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 relative overflow-hidden" style="aspect-ratio: 16 / 9;">
+            {% if theme.thumbnail %}
+                <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="w-full h-full object-cover">
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center">
+                    <i class="fas fa-palette text-white text-4xl opacity-70"></i>
+                </div>
+            {% endif %}
+            <div class="absolute top-2 right-2 flex space-x-1">
+                {% if theme.is_active %}
+                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Active</span>
+                {% else %}
+                    <span class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">Inactive</span>
+                {% endif %}
+                {% if theme.is_premium %}
+                    <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">Premium</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-4">
+            <h3 class="text-base font-semibold text-gray-900 mb-1 truncate">{{ theme.name }}</h3>
+            <p class="text-xs text-gray-500 mb-2">
+                {% if theme.category %}{{ theme.category.name }}{% else %}No Category{% endif %}
+            </p>
+            
+            <div class="flex items-center justify-between text-xs text-gray-400 mb-4">
+                <span><i class="fas fa-calendar mr-1"></i>{{ theme.created_at|date:"d M Y" }}</span>
+                <span><i class="fas fa-download mr-1"></i>{{ theme.download_count }}</span>
+                <span><i class="fas fa-eye mr-1"></i>{{ theme.view_count }}</span>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex space-x-2">
+                <a href="{% url 'admin_panel:theme_edit' theme.pk %}" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium text-center transition-colors">
+                    <i class="fas fa-edit mr-1"></i>Edit
+                </a>
+                <a href="{% url 'admin_panel:theme_preview' theme.pk %}" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors" title="Preview">
+                    <i class="fas fa-eye"></i>
+                </a>
+                <a href="{% url 'admin_panel:theme_download' theme.pk %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors" title="Download ZIP">
+                    <i class="fas fa-download"></i>
+                </a>
+                <form method="POST" action="{% url 'admin_panel:theme_delete' theme.pk %}" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tema ini?');">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+    <i class="fas fa-folder-open text-5xl text-gray-300 mb-4"></i>
+    <h3 class="text-lg font-semibold text-gray-900 mb-2">Tidak ada tema ditemukan</h3>
+    <p class="text-gray-500 mb-4">
+        {% if current_search or current_category or current_status %}
+            Coba ubah filter pencarian Anda
+        {% else %}
+            Belum ada tema yang diupload
+        {% endif %}
+    </p>
+    {% if current_search or current_category or current_status %}
+    <a href="{% url 'admin_panel:theme_list' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <i class="fas fa-times mr-2"></i>Clear Filters
+    </a>
+    {% else %}
+    <a href="{% url 'admin_panel:theme_upload' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <i class="fas fa-plus mr-2"></i>Upload Tema Pertama
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+

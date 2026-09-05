@@ -1,0 +1,321 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ page_title }} - Invywed Admin{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_subtitle %}Complete client profile with all wedding data{% endblock %}
+
+{% block content %}
+<!-- Client Header -->
+<div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+    <div class="p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+            {% if client.profile_photo %}
+                <img class="h-20 w-20 rounded-full object-cover border-4 border-gray-200" src="{{ client.profile_photo.url }}" alt="{{ client.user.username }}">
+            {% else %}
+                <div class="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center border-4 border-gray-200">
+                    <i class="fas fa-user text-gray-600 text-2xl"></i>
+                </div>
+            {% endif %}
+            <div class="flex-1">
+                <h2 class="text-2xl font-bold text-gray-900">{{ client.user.username }}</h2>
+                <p class="text-lg text-gray-600">{{ client.user.email }}</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium
+                        {% if client.subscription_type == 'free' %}bg-gray-100 text-gray-800
+                        {% elif client.subscription_type == 'premium' %}bg-blue-100 text-blue-800
+                        {% elif client.subscription_type == 'gold' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-purple-100 text-purple-800{% endif %}">
+                        {{ client.get_subscription_type_display }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium
+                        {% if form_completed %}bg-green-100 text-green-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        <i class="fas {% if form_completed %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-1"></i>
+                        Form {% if form_completed %}Completed{% else %}Incomplete{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-indigo-600">{{ stats.total_guests }}</div>
+                    <div class="text-xs text-gray-500">Guests</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ stats.attending_guests }}</div>
+                    <div class="text-xs text-gray-500">Attending</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ stats.total_wishes }}</div>
+                    <div class="text-xs text-gray-500">Wishes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="border-b border-gray-200">
+        <nav class="flex -mb-px overflow-x-auto">
+            <button onclick="showTab('overview')" class="tab-button active px-6 py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600">
+                Overview
+            </button>
+            <button onclick="showTab('couple')" class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                Couple Info
+            </button>
+            <button onclick="showTab('events')" class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                Events
+            </button>
+            <button onclick="showTab('gallery')" class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                Gallery
+            </button>
+            <button onclick="showTab('guests')" class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                Guests
+            </button>
+        </nav>
+    </div>
+</div>
+
+<!-- Tab Content -->
+<div id="tab-overview" class="tab-content">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Contact Info -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm text-gray-500">Phone</p>
+                    <p class="text-base text-gray-900">{{ client.phone_number }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">WhatsApp</p>
+                    <p class="text-base text-gray-900">{{ client.whatsapp_number }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">City</p>
+                    <p class="text-base text-gray-900">{{ client.city|default:"-" }}</p>
+                </div>
+                {% if client.address %}
+                <div>
+                    <p class="text-sm text-gray-500">Address</p>
+                    <p class="text-base text-gray-900">{{ client.address }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Subscription Info -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Subscription</h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm text-gray-500">Type</p>
+                    <p class="text-base font-medium text-gray-900">{{ client.get_subscription_type_display }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Level</p>
+                    <p class="text-base text-gray-900">{{ client.get_account_level_display }}</p>
+                </div>
+                {% if client.subscription_expires %}
+                <div>
+                    <p class="text-sm text-gray-500">Expires</p>
+                    <p class="text-base text-gray-900">{{ client.subscription_expires|date:"d M Y" }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-couple" class="tab-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Groom Info -->
+        {% if groom_info %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-male mr-2"></i>Groom Information
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm text-gray-500">Full Name</p>
+                    <p class="text-base font-medium text-gray-900">{{ groom_info.full_name }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Nickname</p>
+                    <p class="text-base text-gray-900">{{ groom_info.nickname }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Birth</p>
+                    <p class="text-base text-gray-900">{{ groom_info.birth_place }}, {{ groom_info.birth_date|date:"d M Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Occupation</p>
+                    <p class="text-base text-gray-900">{{ groom_info.occupation }}</p>
+                </div>
+                {% if groom_info.main_photo %}
+                <div>
+                    <img src="{{ groom_info.main_photo.url }}" alt="Groom" class="w-full rounded-lg">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Bride Info -->
+        {% if bride_info %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-female mr-2"></i>Bride Information
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm text-gray-500">Full Name</p>
+                    <p class="text-base font-medium text-gray-900">{{ bride_info.full_name }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Nickname</p>
+                    <p class="text-base text-gray-900">{{ bride_info.nickname }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Birth</p>
+                    <p class="text-base text-gray-900">{{ bride_info.birth_place }}, {{ bride_info.birth_date|date:"d M Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Occupation</p>
+                    <p class="text-base text-gray-900">{{ bride_info.occupation }}</p>
+                </div>
+                {% if bride_info.main_photo %}
+                <div>
+                    <img src="{{ bride_info.main_photo.url }}" alt="Bride" class="w-full rounded-lg">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="tab-events" class="tab-content hidden">
+    <div class="space-y-6">
+        <!-- Main Event -->
+        {% if main_event %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-calendar-check mr-2"></i>{{ main_event.event_name }}
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Date & Time</p>
+                    <p class="text-base text-gray-900">{{ main_event.event_date|date:"d M Y" }}, {{ main_event.start_time|time:"H:i" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Venue</p>
+                    <p class="text-base text-gray-900">{{ main_event.venue_name }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-500">Address</p>
+                    <p class="text-base text-gray-900">{{ main_event.venue_address }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Reception Event -->
+        {% if reception_event %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-glass-cheers mr-2"></i>{{ reception_event.event_name }}
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Date & Time</p>
+                    <p class="text-base text-gray-900">{{ reception_event.event_date|date:"d M Y" }}, {{ reception_event.start_time|time:"H:i" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Venue</p>
+                    <p class="text-base text-gray-900">{{ reception_event.venue_name }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="tab-gallery" class="tab-content hidden">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for photo in photo_gallery %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <img src="{{ photo.photo.url }}" alt="{{ photo.title }}" class="w-full h-48 object-cover">
+            <div class="p-3">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ photo.title }}</p>
+                <p class="text-xs text-gray-500">{{ photo.get_category_display }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12 text-gray-500">
+            <i class="fas fa-images text-4xl mb-4 text-gray-300"></i>
+            <p>No photos found</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="tab-guests" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Guests ({{ guests|length }})</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Group</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for guest in guests %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ guest.full_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ guest.guest_group.group_name|default:"-" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ guest.phone_number|default:"-" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <a href="{% url 'admin_panel:guest_detail' guest.pk %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-gray-500">No guests found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'border-indigo-500', 'text-indigo-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active', 'border-indigo-500', 'text-indigo-600');
+    event.target.classList.remove('border-transparent', 'text-gray-500');
+}
+</script>
+{% endblock %}
+

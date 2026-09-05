@@ -1,0 +1,446 @@
+{% extends 'users/base_user.html' %}
+{% load static %}
+
+{% block title %}Pilih Template - Invywed{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+    <div class="px-4 py-3 lg:px-6 lg:py-4">
+        <h1 class="text-lg md:text-xl font-bold text-gray-900">Pilih Template Undangan</h1>
+        <p class="text-xs md:text-sm text-gray-500 mt-0.5">Cari dan pilih template yang sesuai</p>
+    </div>
+</div>
+
+<!-- Content -->
+<div class="container-responsive py-4 lg:py-6 pb-20 lg:pb-6">
+    <form method="POST" id="themeSelectForm">
+        {% csrf_token %}
+        <input type="hidden" name="theme_id" id="hiddenThemeId" required>
+        
+        <!-- Search Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+            <div class="flex items-center space-x-2 mb-2">
+                <label class="block text-sm font-medium text-gray-700 flex-1">
+                    Cari Template <span class="text-red-500">*</span>
+                </label>
+                <button type="button" onclick="toggleFilter()" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                    <i class="fas fa-filter mr-1"></i>
+                    Filter
+                </button>
+            </div>
+            <div class="relative">
+                <input type="text" 
+                       id="themeSearch" 
+                       name="search_query" 
+                       placeholder="Masukkan kode atau nama template..." 
+                       required
+                       class="w-full px-4 py-3 pl-10 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Cari berdasarkan nama template, kode template, atau kategori</p>
+        </div>
+        
+        <!-- Filter Section (Hidden by default) -->
+        <div id="filterSection" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Filter Template</h3>
+            <div class="space-y-3">
+                <!-- Category Filter -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-2">Kategori</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="setCategoryFilter('all')" class="category-filter-btn active px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg font-medium transition-colors" data-category="all">
+                            Semua
+                        </button>
+                        {% for category in categories %}
+                        <button type="button" onclick="setCategoryFilter('{{ category.id }}')" class="category-filter-btn px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-lg font-medium hover:bg-gray-200 transition-colors" data-category="{{ category.id }}">
+                            {{ category.name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Premium/Free Filter -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-2">Tipe</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="setTypeFilter('all')" class="type-filter-btn active px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg font-medium transition-colors" data-type="all">
+                            Semua
+                        </button>
+                        <button type="button" onclick="setTypeFilter('free')" class="type-filter-btn px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-lg font-medium hover:bg-gray-200 transition-colors" data-type="free">
+                            Gratis
+                        </button>
+                        <button type="button" onclick="setTypeFilter('premium')" class="type-filter-btn px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-lg font-medium hover:bg-gray-200 transition-colors" data-type="premium">
+                            Premium
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Selected Theme Display -->
+        <div id="selectedThemeSection" class="bg-white rounded-xl shadow-sm border-2 border-indigo-600 p-4 mb-4 {% if not selected_theme %}hidden{% endif %}">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Template Terpilih</h3>
+            {% if selected_theme %}
+            <div class="flex items-center space-x-3 p-3 bg-indigo-50 rounded-lg">
+                {% if selected_theme.thumbnail %}
+                <img src="{{ selected_theme.thumbnail.url }}" alt="{{ selected_theme.name }}" class="w-16 h-16 object-cover rounded-lg">
+                {% else %}
+                <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-image text-gray-400"></i>
+                </div>
+                {% endif %}
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">{{ selected_theme.name }}</p>
+                    <p class="text-xs text-gray-500">{{ selected_theme.category.name }}</p>
+                </div>
+                <span class="px-2 py-1 bg-indigo-600 text-white text-xs rounded-full font-medium">
+                    <i class="fas fa-check mr-1"></i>Terpilih
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- All Themes Grid -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-gray-900">Semua Template</h3>
+                <span id="themeCount" class="text-xs text-gray-500">{{ themes|length }} template</span>
+            </div>
+            <div id="allThemesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {% for theme in themes %}
+                <div class="theme-card border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-indigo-500 transition-colors {% if selected_theme.id == theme.id %}border-indigo-600 border-2{% endif %}" 
+                     data-theme-id="{{ theme.id }}"
+                     data-category-id="{{ theme.category.id }}"
+                     data-is-premium="{{ theme.is_premium|lower }}"
+                     onclick="selectTheme({{ theme.id }}, '{{ theme.name }}', '{{ theme.category.name }}', '{% if theme.thumbnail %}{{ theme.thumbnail.url }}{% endif %}', '{{ theme.slug }}', {{ theme.is_premium|lower }}, '{{ theme.price }}')">
+                    <div class="relative">
+                        {% if theme.thumbnail %}
+                            <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="w-full h-32 object-cover">
+                        {% else %}
+                            <div class="w-full h-32 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-2xl"></i>
+                            </div>
+                        {% endif %}
+                        {% if theme.is_premium %}
+                        <span class="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">Premium</span>
+                        {% endif %}
+                        {% if selected_theme.id == theme.id %}
+                        <span class="absolute top-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
+                            <i class="fas fa-check mr-1"></i>Terpilih
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="p-2">
+                        <p class="text-xs font-medium text-gray-900 truncate">{{ theme.name }}</p>
+                        <p class="text-xs text-gray-500">{{ theme.category.name }}</p>
+                        <p class="text-xs font-semibold text-indigo-600 mt-1">
+                            {% if theme.price == 0 %}Gratis{% else %}Rp {{ theme.price|floatformat:0 }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="noThemesMessage" class="hidden text-center py-8">
+                <i class="fas fa-search text-gray-400 text-3xl mb-2"></i>
+                <p class="text-sm text-gray-500">Tidak ada template yang sesuai dengan filter</p>
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg transition-colors duration-200">
+            <i class="fas fa-check mr-2"></i>
+            Simpan Pilihan Template
+        </button>
+    </form>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900" id="modalThemeName">Preview Template</h3>
+            <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-4">
+            <div id="modalThemeImage" class="mb-4">
+                <!-- Thumbnail will be loaded here -->
+            </div>
+            <div id="modalThemeInfo">
+                <!-- Theme info will be loaded here -->
+            </div>
+            <div class="mt-4 flex space-x-3">
+                <button onclick="selectThemeFromModal()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-check mr-2"></i>
+                    Pilih Template Ini
+                </button>
+                <button onclick="closePreviewModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentSelectedThemeId = null;
+    let currentSelectedTheme = null;
+    let currentCategoryFilter = 'all';
+    let currentTypeFilter = 'all';
+    let allThemes = [];
+    
+    // Initialize themes data
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeCards = document.querySelectorAll('.theme-card');
+        themeCards.forEach(card => {
+            allThemes.push({
+                id: card.dataset.themeId,
+                categoryId: card.dataset.categoryId,
+                isPremium: card.dataset.isPremium === 'true',
+                element: card
+            });
+        });
+    });
+    
+    // Toggle filter section
+    function toggleFilter() {
+        const filterSection = document.getElementById('filterSection');
+        filterSection.classList.toggle('hidden');
+    }
+    
+    // Category filter
+    function setCategoryFilter(categoryId) {
+        currentCategoryFilter = categoryId;
+        
+        // Update button states
+        document.querySelectorAll('.category-filter-btn').forEach(btn => {
+            if (btn.dataset.category === categoryId) {
+                btn.classList.add('active', 'bg-indigo-600', 'text-white');
+                btn.classList.remove('bg-gray-100', 'text-gray-700');
+            } else {
+                btn.classList.remove('active', 'bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            }
+        });
+        
+        applyFilters();
+    }
+    
+    // Type filter
+    function setTypeFilter(type) {
+        currentTypeFilter = type;
+        
+        // Update button states
+        document.querySelectorAll('.type-filter-btn').forEach(btn => {
+            if (btn.dataset.type === type) {
+                btn.classList.add('active', 'bg-indigo-600', 'text-white');
+                btn.classList.remove('bg-gray-100', 'text-gray-700');
+            } else {
+                btn.classList.remove('active', 'bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            }
+        });
+        
+        applyFilters();
+    }
+    
+    // Apply filters
+    function applyFilters() {
+        const grid = document.getElementById('allThemesGrid');
+        const noThemesMessage = document.getElementById('noThemesMessage');
+        let visibleCount = 0;
+        
+        allThemes.forEach(theme => {
+            let show = true;
+            
+            // Category filter
+            if (currentCategoryFilter !== 'all' && theme.categoryId !== currentCategoryFilter) {
+                show = false;
+            }
+            
+            // Type filter
+            if (currentTypeFilter !== 'all') {
+                if (currentTypeFilter === 'premium' && !theme.isPremium) {
+                    show = false;
+                } else if (currentTypeFilter === 'free' && theme.isPremium) {
+                    show = false;
+                }
+            }
+            
+            // Show/hide theme
+            if (show) {
+                theme.element.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                theme.element.classList.add('hidden');
+            }
+        });
+        
+        // Update count
+        document.getElementById('themeCount').textContent = `${visibleCount} template`;
+        
+        // Show/hide no themes message
+        if (visibleCount === 0) {
+            noThemesMessage.classList.remove('hidden');
+        } else {
+            noThemesMessage.classList.add('hidden');
+        }
+    }
+    
+    // Search functionality
+    document.getElementById('themeSearch').addEventListener('input', function(e) {
+        const query = e.target.value.trim().toLowerCase();
+        
+        if (!query) {
+            // Show all themes when search is empty
+            allThemes.forEach(theme => {
+                theme.element.classList.remove('hidden');
+            });
+            applyFilters();
+            return;
+        }
+        
+        // Filter by search query
+        allThemes.forEach(theme => {
+            const card = theme.element;
+            const name = card.querySelector('p').textContent.toLowerCase();
+            const category = card.querySelectorAll('p')[1].textContent.toLowerCase();
+            const slug = card.dataset.themeId;
+            
+            if (name.includes(query) || category.includes(query) || slug.includes(query)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+        
+        applyFilters();
+    });
+    
+    // Select theme
+    function selectTheme(id, name, category, thumbnailUrl, slug, isPremium, price) {
+        currentSelectedThemeId = id;
+        currentSelectedTheme = { id, name, category, thumbnailUrl, slug, isPremium, price };
+        
+        // Update hidden input
+        document.getElementById('hiddenThemeId').value = id;
+        
+        // Update selected theme section
+        const selectedSection = document.getElementById('selectedThemeSection');
+        selectedSection.classList.remove('hidden');
+        
+        selectedSection.innerHTML = `
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Template Terpilih</h3>
+            <div class="flex items-center space-x-3 p-3 bg-indigo-50 rounded-lg">
+                ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${name}" class="w-16 h-16 object-cover rounded-lg">` : 
+                  `<div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-image text-gray-400"></i>
+                  </div>`
+                }
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">${name}</p>
+                    <p class="text-xs text-gray-500">${category}</p>
+                </div>
+                <span class="px-2 py-1 bg-indigo-600 text-white text-xs rounded-full font-medium">
+                    <i class="fas fa-check mr-1"></i>Terpilih
+                </span>
+            </div>
+        `;
+        
+        // Update card borders
+        document.querySelectorAll('.theme-card').forEach(card => {
+            if (card.dataset.themeId == id) {
+                card.classList.add('border-indigo-600', 'border-2');
+                card.classList.remove('border-gray-200');
+            } else {
+                card.classList.remove('border-indigo-600', 'border-2');
+                card.classList.add('border-gray-200');
+            }
+        });
+        
+        // Open preview modal
+        openPreviewModal(currentSelectedTheme);
+    }
+    
+    function openPreviewModal(theme) {
+        const modal = document.getElementById('previewModal');
+        const modalName = document.getElementById('modalThemeName');
+        const modalImage = document.getElementById('modalThemeImage');
+        const modalInfo = document.getElementById('modalThemeInfo');
+        
+        modalName.textContent = theme.name;
+        
+        // Set image
+        if (theme.thumbnailUrl) {
+            modalImage.innerHTML = `<img src="${theme.thumbnailUrl}" alt="${theme.name}" class="w-full h-auto rounded-lg border border-gray-200">`;
+        } else {
+            modalImage.innerHTML = `<div class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                <i class="fas fa-image text-gray-400 text-4xl"></i>
+            </div>`;
+        }
+        
+        // Set info
+        modalInfo.innerHTML = `
+            <div class="space-y-2">
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Kategori</p>
+                    <p class="text-sm text-gray-900">${theme.category}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Kode Template</p>
+                    <p class="text-sm text-gray-900 font-mono">${theme.slug}</p>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Harga</p>
+                        <p class="text-lg font-bold text-indigo-600">${parseFloat(theme.price) === 0 ? 'Gratis' : 'Rp ' + parseFloat(theme.price).toLocaleString('id-ID')}</p>
+                    </div>
+                    ${theme.isPremium ? '<span class="bg-yellow-500 text-white text-xs px-3 py-1 rounded-full">Premium</span>' : ''}
+                </div>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+    }
+    
+    function closePreviewModal() {
+        document.getElementById('previewModal').classList.add('hidden');
+    }
+    
+    function selectThemeFromModal() {
+        if (currentSelectedTheme) {
+            closePreviewModal();
+        }
+    }
+    
+    // Close modal on outside click
+    document.getElementById('previewModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePreviewModal();
+        }
+    });
+    
+    // Form validation
+    document.getElementById('themeSelectForm').addEventListener('submit', function(e) {
+        const searchQuery = document.getElementById('themeSearch').value.trim();
+        const themeId = document.getElementById('hiddenThemeId').value;
+        
+        if (!searchQuery) {
+            e.preventDefault();
+            alert('Mohon cari template terlebih dahulu!');
+            document.getElementById('themeSearch').focus();
+            return false;
+        }
+        
+        if (!themeId) {
+            e.preventDefault();
+            alert('Mohon pilih template dengan mengklik salah satu template!');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,843 @@
+{% extends 'users/base_user.html' %}
+{% load static %}
+
+{% block title %}Data Mempelai - Invywed{% endblock %}
+
+{% block extra_css %}
+<style>
+    .step-content {
+        display: none;
+    }
+    .step-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .step-indicator {
+        transition: all 0.3s ease;
+    }
+    .step-indicator.active {
+        background: #4f46e5;
+        color: white;
+    }
+    .step-indicator.completed {
+        background: #10b981;
+        color: white;
+    }
+    .step-indicator.inactive {
+        background: #e5e7eb;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header with Progress -->
+<div class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+    <div class="px-4 py-2.5 lg:px-6 lg:py-3 flex items-center justify-between">
+        <div>
+            <h1 class="text-base md:text-lg lg:text-base font-bold text-gray-900">Data Mempelai & Acara</h1>
+            <p class="text-xs text-gray-500 mt-0.5">Lengkapi data pernikahan Anda</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            {% if invitation and invitation.invitation_slug %}
+            <a href="{% url 'admin_panel:invitation_preview' invitation.invitation_slug %}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center">
+                <i class="fas fa-eye mr-1.5"></i>
+                <span class="hidden sm:inline">Preview</span>
+            </a>
+            {% elif is_complete and client_profile.selected_theme %}
+            <button onclick="alert('Slug undangan belum tersedia. Harap lengkapi semua data dan simpan terlebih dahulu.');" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center cursor-not-allowed">
+                <i class="fas fa-eye mr-1.5"></i>
+                <span class="hidden sm:inline">Preview</span>
+            </button>
+            {% endif %}
+            {% if is_complete %}
+            <a href="{% url 'users:wedding_data_view' %}" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium flex items-center">
+                <i class="fas fa-file-alt mr-1.5"></i>
+                <span class="hidden sm:inline">Lihat</span>
+            </a>
+            {% endif %}
+            {% if is_complete and not client_profile.selected_theme %}
+            <a href="{% url 'users:select_theme' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center">
+                <i class="fas fa-palette mr-1"></i>
+                <span class="hidden sm:inline">Template</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Progress Steps -->
+    <div class="px-4 pb-2.5">
+        <div class="flex items-center justify-between">
+            <!-- Step 1 -->
+            <div class="flex items-center flex-1">
+                <div class="step-indicator active w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" id="step-indicator-1">
+                    <i class="fas fa-male"></i>
+                </div>
+                <div class="flex-1 h-1 mx-2 bg-gray-200 rounded" id="progress-line-1">
+                    <div class="h-full bg-indigo-600 rounded transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="flex items-center flex-1">
+                <div class="step-indicator inactive w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" id="step-indicator-2">
+                    <i class="fas fa-female"></i>
+                </div>
+                <div class="flex-1 h-1 mx-2 bg-gray-200 rounded" id="progress-line-2">
+                    <div class="h-full bg-indigo-600 rounded transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="flex items-center">
+                <div class="step-indicator inactive w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" id="step-indicator-3">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step Labels -->
+        <div class="flex justify-between mt-2 text-xs">
+            <span class="text-indigo-600 font-medium">Mempelai Pria</span>
+            <span class="text-gray-500">Mempelai Wanita</span>
+            <span class="text-gray-500">Acara</span>
+        </div>
+    </div>
+</div>
+
+<!-- Form Container -->
+<div class="container-responsive py-4 lg:py-6 pb-20 lg:pb-6">
+    <form method="POST" enctype="multipart/form-data" id="weddingDataForm">
+        {% csrf_token %}
+        
+        <!-- Step 1: Mempelai Pria -->
+        <div id="step-1" class="step-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+                <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+                    <i class="fas fa-male mr-2 text-indigo-600"></i>
+                    Data Mempelai Pria
+                </h3>
+                
+                <div class="space-y-3 lg:space-y-4">
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Lengkap <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="groom_full_name" id="groom_full_name" value="{{ groom_info.full_name|default:'' }}" required
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Masukkan nama lengkap">
+                    </div>
+                    
+                    <!-- Nickname -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Panggilan
+                        </label>
+                        <input type="text" name="groom_nickname" id="groom_nickname" value="{{ groom_info.nickname|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama panggilan">
+                    </div>
+                    
+                    <!-- Child Order -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Putra/Putri Ke-
+                        </label>
+                        <input type="text" name="groom_child_order" id="groom_child_order" value="{{ groom_info.child_order|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Contoh: Putra pertama dari">
+                    </div>
+                    
+                    <!-- Father Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Ayah
+                        </label>
+                        <input type="text" name="groom_father_name" id="groom_father_name" value="{{ groom_info.father_name|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama ayah">
+                    </div>
+                    
+                    <!-- Mother Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Ibu
+                        </label>
+                        <input type="text" name="groom_mother_name" id="groom_mother_name" value="{{ groom_info.mother_name|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama ibu">
+                    </div>
+                    
+                    <!-- Photo -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Foto Utama
+                        </label>
+                        {% if groom_info.main_photo %}
+                            <div class="mb-2">
+                                <img src="{{ groom_info.main_photo.url }}" alt="Foto Utama" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+                            </div>
+                        {% endif %}
+                        <input type="file" name="groom_main_photo" id="groom_main_photo" accept="image/*"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, Max 5MB</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Mempelai Wanita -->
+        <div id="step-2" class="step-content">
+            <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4 mb-4">
+                <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+                    <i class="fas fa-female mr-2 text-pink-600"></i>
+                    Data Mempelai Wanita
+                </h3>
+                
+                <div class="space-y-3 lg:space-y-4">
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Lengkap <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="bride_full_name" id="bride_full_name" value="{{ bride_info.full_name|default:'' }}" required
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Masukkan nama lengkap">
+                    </div>
+                    
+                    <!-- Nickname -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Panggilan
+                        </label>
+                        <input type="text" name="bride_nickname" id="bride_nickname" value="{{ bride_info.nickname|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama panggilan">
+                    </div>
+                    
+                    <!-- Child Order -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Putra/Putri Ke-
+                        </label>
+                        <input type="text" name="bride_child_order" id="bride_child_order" value="{{ bride_info.child_order|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Contoh: Putri pertama dari">
+                    </div>
+                    
+                    <!-- Father Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Ayah
+                        </label>
+                        <input type="text" name="bride_father_name" id="bride_father_name" value="{{ bride_info.father_name|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama ayah">
+                    </div>
+                    
+                    <!-- Mother Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Ibu
+                        </label>
+                        <input type="text" name="bride_mother_name" id="bride_mother_name" value="{{ bride_info.mother_name|default:'' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama ibu">
+                    </div>
+                    
+                    <!-- Photo -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Foto Utama
+                        </label>
+                        {% if bride_info.main_photo %}
+                            <div class="mb-2">
+                                <img src="{{ bride_info.main_photo.url }}" alt="Foto Utama" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+                            </div>
+                        {% endif %}
+                        <input type="file" name="bride_main_photo" id="bride_main_photo" accept="image/*"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, Max 5MB</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 3: Acara -->
+        <div id="step-3" class="step-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <!-- Acara Akad -->
+            <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+                <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+                    <i class="fas fa-mosque mr-2 text-indigo-600"></i>
+                    Acara Akad Nikah
+                </h3>
+                
+                <div class="space-y-3 lg:space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Acara
+                        </label>
+                        <input type="text" name="main_event_name" id="main_event_name" value="{{ main_event.event_name|default:'Akad Nikah' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama acara">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Tanggal <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" name="main_event_date" id="main_event_date" value="{% if main_event.event_date %}{{ main_event.event_date|date:'Y-m-d' }}{% endif %}" required
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Jam Mulai <span class="text-red-500">*</span>
+                            </label>
+                            <input type="time" name="main_start_time" id="main_start_time" value="{% if main_event.start_time %}{{ main_event.start_time|time:'H:i' }}{% endif %}" required
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Tempat <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="main_venue_name" id="main_venue_name" value="{{ main_event.venue_name|default:'' }}" required
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama tempat acara">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Alamat Lengkap <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="main_venue_address" id="main_venue_address" rows="3" required
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Alamat lengkap tempat acara">{{ main_event.venue_address|default:'' }}</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Link Google Maps
+                        </label>
+                        <input type="url" name="main_google_maps_url" id="main_google_maps_url" value="{{ main_event.google_maps_url|default:'' }}"
+                            placeholder="https://maps.google.com/..."
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Acara Resepsi -->
+            <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+                <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+                    <i class="fas fa-utensils mr-2 text-pink-600"></i>
+                    Acara Resepsi
+                </h3>
+                
+                <div class="space-y-3 lg:space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Acara
+                        </label>
+                        <input type="text" name="reception_event_name" id="reception_event_name" value="{{ reception_event.event_name|default:'Resepsi Pernikahan' }}"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama acara">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Tanggal <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" name="reception_event_date" id="reception_event_date" value="{% if reception_event.event_date %}{{ reception_event.event_date|date:'Y-m-d' }}{% endif %}" required
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Jam Mulai <span class="text-red-500">*</span>
+                            </label>
+                            <input type="time" name="reception_start_time" id="reception_start_time" value="{% if reception_event.start_time %}{{ reception_event.start_time|time:'H:i' }}{% endif %}" required
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Tempat <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="reception_venue_name" id="reception_venue_name" value="{{ reception_event.venue_name|default:'' }}" required
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Nama tempat acara">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Alamat Lengkap <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="reception_venue_address" id="reception_venue_address" rows="3" required
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Alamat lengkap tempat acara">{{ reception_event.venue_address|default:'' }}</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Link Google Maps
+                        </label>
+                        <input type="url" name="reception_google_maps_url" id="reception_google_maps_url" value="{{ reception_event.google_maps_url|default:'' }}"
+                            placeholder="https://maps.google.com/..."
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Dress Code
+                        </label>
+                        <input type="text" name="reception_dress_code" id="reception_dress_code" value="{{ reception_event.dress_code|default:'' }}"
+                            placeholder="Contoh: Batik, Formal, dll"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Adab Walimah
+                        </label>
+                        <textarea name="reception_adab_walimah" id="reception_adab_walimah" rows="4"
+                            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Panduan adab untuk tamu undangan">{{ reception_event.adab_walimah|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            </div>
+            
+            <!-- Memorable Moment (Photo Gallery) - Full Width -->
+            <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4 mb-4 lg:col-span-2">
+                <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+                    <i class="fas fa-images mr-2 text-purple-600"></i>
+                    Memorable Moment (Galeri Foto)
+                </h3>
+                
+                <div id="photo-gallery-container" class="space-y-3 lg:space-y-4">
+                    {% for photo in photo_gallery %}
+                    <div class="photo-item border border-gray-200 rounded-lg p-4 relative">
+                        <button type="button" onclick="removePhotoItem(this)" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Judul Foto
+                                </label>
+                                <input type="text" name="photo_title[]" value="{{ photo.title|default:'' }}" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Judul foto (opsional)">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Foto
+                                </label>
+                                {% if photo.photo %}
+                                <div class="mb-2">
+                                    <img src="{{ photo.photo.url }}" alt="{{ photo.title|default:'Foto' }}" class="w-full h-32 object-cover rounded-lg border border-gray-200">
+                                    <p class="text-xs text-gray-500 mt-1">Foto saat ini (kosongkan jika tidak ingin mengubah)</p>
+                                </div>
+                                {% endif %}
+                                <input type="file" name="photo_files[]" accept="image/*" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Keterangan
+                                </label>
+                                <textarea name="photo_caption[]" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Keterangan foto (opsional)">{{ photo.caption|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="photo-item border border-gray-200 rounded-lg p-4">
+                        <div class="grid grid-cols-1 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Judul Foto
+                                </label>
+                                <input type="text" name="photo_title[]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Judul foto (opsional)">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Foto
+                                </label>
+                                <input type="file" name="photo_files[]" accept="image/*" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Keterangan
+                                </label>
+                                <textarea name="photo_caption[]" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Keterangan foto (opsional)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <button type="button" onclick="addPhotoItem()" class="mt-3 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Foto
+                </button>
+            </div>
+            
+            <!-- Our Story (Love Story) - Full Width -->
+            <div class="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4 mb-4 lg:col-span-2">
+                <h3 class="text-sm lg:text-base font-semibold text-gray-900 mb-3 lg:mb-4 flex items-center">
+                    <i class="fas fa-heart mr-2 text-red-600"></i>
+                    Our Story (Cerita Cinta)
+                </h3>
+                
+                <div id="story-container" class="space-y-3 lg:space-y-4">
+                    {% for story in love_stories %}
+                    <div class="story-item border border-gray-200 rounded-lg p-4 relative">
+                        <button type="button" onclick="removeStoryItem(this)" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Judul Cerita <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="story_title[]" value="{{ story.title|default:'' }}" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Contoh: Pertemuan Pertama">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Tanggal Peristiwa
+                                    </label>
+                                    <input type="date" name="story_date[]" value="{% if story.story_date %}{{ story.story_date|date:'Y-m-d' }}{% endif %}" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Foto
+                                    </label>
+                                    {% if story.story_photo %}
+                                    <div class="mb-2">
+                                        <img src="{{ story.story_photo.url }}" alt="{{ story.title|default:'Foto' }}" class="w-full h-32 object-cover rounded-lg border border-gray-200">
+                                        <p class="text-xs text-gray-500 mt-1">Foto saat ini (kosongkan jika tidak ingin mengubah)</p>
+                                    </div>
+                                    {% endif %}
+                                    <input type="file" name="story_photo[]" accept="image/*" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Isi Cerita
+                                </label>
+                                <textarea name="story_content[]" rows="4" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Ceritakan momen spesial Anda...">{{ story.story_content|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="story-item border border-gray-200 rounded-lg p-4">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Judul Cerita <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="story_title[]" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Contoh: Pertemuan Pertama">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Tanggal Peristiwa
+                                    </label>
+                                    <input type="date" name="story_date[]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Foto
+                                    </label>
+                                    <input type="file" name="story_photo[]" accept="image/*" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Isi Cerita
+                                </label>
+                                <textarea name="story_content[]" rows="4" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Ceritakan momen spesial Anda..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <button type="button" onclick="addStoryItem()" class="mt-3 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Cerita
+                </button>
+            </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Navigation Buttons (Fixed Bottom) -->
+<div class="fixed bottom-20 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-10 shadow-lg">
+    <div class="flex items-center justify-between space-x-3">
+        <button type="button" onclick="previousStep()" id="prevBtn" class="hidden flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200 flex items-center justify-center">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Sebelumnya
+        </button>
+        <button type="button" onclick="nextStep()" id="nextBtn" class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center">
+            Selanjutnya
+            <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+        <button type="submit" form="weddingDataForm" id="submitBtn" class="hidden flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center">
+            <i class="fas fa-save mr-2"></i>
+            Simpan Data
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentStep = 1;
+    const totalSteps = 3;
+    
+    // Step validation rules
+    const stepValidation = {
+        1: {
+            required: ['groom_full_name'],
+            optional: ['groom_nickname', 'groom_main_photo']
+        },
+        2: {
+            required: ['bride_full_name'],
+            optional: ['bride_nickname', 'bride_main_photo']
+        },
+        3: {
+            required: ['main_event_date', 'main_start_time', 'main_venue_name', 'main_venue_address', 'reception_event_date', 'reception_start_time', 'reception_venue_name', 'reception_venue_address'],
+            optional: ['main_event_name', 'main_google_maps_url', 'reception_event_name', 'reception_google_maps_url', 'reception_dress_code']
+        }
+    };
+    
+    function validateStep(step) {
+        const rules = stepValidation[step];
+        let isValid = true;
+        let missingFields = [];
+        
+        // Check required fields
+        rules.required.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && !field.value.trim()) {
+                isValid = false;
+                missingFields.push(field.previousElementSibling?.textContent?.trim() || fieldId);
+                field.classList.add('border-red-500');
+            } else if (field) {
+                field.classList.remove('border-red-500');
+            }
+        });
+        
+        if (!isValid) {
+            alert('Mohon lengkapi field yang wajib diisi:\n- ' + missingFields.join('\n- '));
+        }
+        
+        return isValid;
+    }
+    
+    function updateProgress() {
+        // Update step indicators
+        for (let i = 1; i <= totalSteps; i++) {
+            const indicator = document.getElementById(`step-indicator-${i}`);
+            const progressLine = document.getElementById(`progress-line-${i}`);
+            
+            if (i < currentStep) {
+                indicator.classList.remove('active', 'inactive');
+                indicator.classList.add('completed');
+                if (progressLine) {
+                    progressLine.querySelector('div').style.width = '100%';
+                }
+            } else if (i === currentStep) {
+                indicator.classList.remove('completed', 'inactive');
+                indicator.classList.add('active');
+                if (progressLine) {
+                    progressLine.querySelector('div').style.width = '50%';
+                }
+            } else {
+                indicator.classList.remove('active', 'completed');
+                indicator.classList.add('inactive');
+                if (progressLine) {
+                    progressLine.querySelector('div').style.width = '0%';
+                }
+            }
+        }
+        
+        // Update navigation buttons
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (currentStep === 1) {
+            prevBtn.classList.add('hidden');
+        } else {
+            prevBtn.classList.remove('hidden');
+        }
+        
+        if (currentStep === totalSteps) {
+            nextBtn.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+        } else {
+            nextBtn.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+        }
+    }
+    
+    function showStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Show current step
+        document.getElementById(`step-${step}`).classList.add('active');
+        
+        // Update progress
+        updateProgress();
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    function nextStep() {
+        if (validateStep(currentStep)) {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+    }
+    
+    function previousStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    }
+    
+    // Initialize
+    updateProgress();
+    
+    // Form submission
+    document.getElementById('weddingDataForm').addEventListener('submit', function(e) {
+        // Validate all steps before submit
+        for (let step = 1; step <= totalSteps; step++) {
+            if (!validateStep(step)) {
+                e.preventDefault();
+                showStep(step);
+                alert('Mohon lengkapi semua data yang wajib diisi sebelum menyimpan.');
+                return false;
+            }
+        }
+    });
+    
+    // Photo Gallery Functions
+    function addPhotoItem() {
+        const container = document.getElementById('photo-gallery-container');
+        const newItem = document.createElement('div');
+        newItem.className = 'photo-item border border-gray-200 rounded-lg p-4';
+        newItem.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">Foto Baru</span>
+                <button type="button" onclick="removePhotoItem(this)" class="text-red-600 hover:text-red-700 text-sm">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Judul Foto
+                    </label>
+                    <input type="text" name="photo_title[]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        placeholder="Judul foto (opsional)">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Foto
+                    </label>
+                    <input type="file" name="photo_files[]" accept="image/*" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Keterangan
+                    </label>
+                    <textarea name="photo_caption[]" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        placeholder="Keterangan foto (opsional)"></textarea>
+                </div>
+            </div>
+        `;
+        container.appendChild(newItem);
+    }
+    
+    function removePhotoItem(button) {
+        button.closest('.photo-item').remove();
+    }
+    
+    // Love Story Functions
+    function addStoryItem() {
+        const container = document.getElementById('story-container');
+        const newItem = document.createElement('div');
+        newItem.className = 'story-item border border-gray-200 rounded-lg p-4';
+        newItem.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">Cerita Baru</span>
+                <button type="button" onclick="removeStoryItem(this)" class="text-red-600 hover:text-red-700 text-sm">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Judul Cerita <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="story_title[]" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        placeholder="Contoh: Pertemuan Pertama">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Tanggal Peristiwa
+                        </label>
+                        <input type="date" name="story_date[]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Foto
+                        </label>
+                        <input type="file" name="story_photo[]" accept="image/*" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Isi Cerita
+                    </label>
+                    <textarea name="story_content[]" rows="4" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        placeholder="Ceritakan momen spesial Anda..."></textarea>
+                </div>
+            </div>
+        `;
+        container.appendChild(newItem);
+    }
+    
+    function removeStoryItem(button) {
+        button.closest('.story-item').remove();
+    }
+</script>
+{% endblock %}

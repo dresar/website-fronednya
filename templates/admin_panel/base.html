@@ -1,0 +1,605 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Invywed Admin Panel{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/media/logo/Logo Brand.png">
+    <link rel="apple-touch-icon" href="/media/logo/Logo Brand.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Summernote -->
+    {{ form.media }}
+    
+    {% block extra_head %}{% endblock %}
+    
+    <style>
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-50 overflow-hidden">
+    <div class="flex h-full">
+        <!-- Sidebar Mobile Overlay -->
+        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"></div>
+        
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform -translate-x-full transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 border-r border-gray-200">
+            <div class="flex flex-col h-full">
+                <!-- Logo & Brand -->
+                <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-indigo-600">
+                    <div class="flex items-center space-x-3">
+                        <img src="/media/logo/Logo Brand.png" alt="Invywed Logo" class="h-10 w-auto object-contain">
+                        <div class="text-white">
+                            <span class="text-xl font-bold">Invywed</span>
+                            <p class="text-xs text-indigo-200">Admin Panel</p>
+                        </div>
+                    </div>
+                    <button id="sidebarClose" class="lg:hidden text-white hover:text-indigo-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+                    <!-- Dashboard -->
+                    <a href="{% url 'admin_panel:dashboard' %}" 
+                       class="{% if request.resolver_match.url_name == 'dashboard' %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200">
+                        <i class="fas fa-tachometer-alt {% if request.resolver_match.url_name == 'dashboard' %}text-indigo-500{% else %}text-gray-400{% endif %} mr-3 text-lg"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    
+                    <!-- Thema Management -->
+                    <div class="space-y-1">
+                        <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <i class="fas fa-palette mr-2"></i>
+                            Theme Management
+                        </div>
+                        <a href="{% url 'admin_panel:theme_list' %}" 
+                           class="{% if 'thema' in request.resolver_match.url_name or 'theme' in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-th-large mr-3"></i>
+                            <span>All Themes</span>
+                        </a>
+                        <a href="{% url 'admin_panel:theme_upload' %}" 
+                           class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-plus mr-3"></i>
+                            <span>Upload Theme</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Invitations -->
+                    <div class="space-y-1">
+                        <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <i class="fas fa-envelope mr-2"></i>
+                            Invitations
+                        </div>
+                        <a href="{% url 'admin_panel:invitation_list' %}" 
+                           class="{% if 'invitation' in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-list mr-3"></i>
+                            <span>All Invitations</span>
+                        </a>
+                        <a href="{% url 'admin_panel:invitation_add' %}" 
+                           class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-plus mr-3"></i>
+                            <span>Create Invitation</span>
+                        </a>
+                    </div>
+                    
+                    
+                    <!-- User Management -->
+                    <div class="space-y-1">
+                        <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <i class="fas fa-users mr-2"></i>
+                            User Management
+                        </div>
+                        <a href="{% url 'admin_panel:user_list' %}" 
+                           class="{% if 'user' in request.resolver_match.url_name and 'client' not in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-user-friends mr-3"></i>
+                            <span>All Users</span>
+                        </a>
+                        <a href="{% url 'admin_panel:client_profile_list' %}" 
+                           class="{% if 'client' in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-user-circle mr-3"></i>
+                            <span>Client Profiles</span>
+                        </a>
+                    </div>
+                    
+                    <!-- WhatsApp Management -->
+                    <div class="space-y-1">
+                        <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <i class="fab fa-whatsapp mr-2"></i>
+                            WhatsApp
+                        </div>
+                        <a href="{% url 'admin_panel:whatsapp_management' %}" 
+                           class="{% if 'whatsapp' in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fab fa-whatsapp mr-3"></i>
+                            <span>WhatsApp</span>
+                        </a>
+                    </div>
+                    
+                    <!-- QR & Guest Management -->
+                    <div class="space-y-1">
+                        <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <i class="fas fa-qrcode mr-2"></i>
+                            QR & Guests
+                        </div>
+                        <a href="{% url 'admin_panel:guest_list' %}" 
+                           class="{% if 'guest' in request.resolver_match.url_name and 'group' not in request.resolver_match.url_name and 'wish' not in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-users mr-3"></i>
+                            <span>All Guests</span>
+                        </a>
+                        <a href="{% url 'admin_panel:guest_group_list' %}" 
+                           class="{% if 'guest_group' in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-layer-group mr-3"></i>
+                            <span>Guest Groups</span>
+                        </a>
+                        <a href="{% url 'admin_panel:rsvp_list' %}" 
+                           class="{% if 'rsvp' in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span>RSVP</span>
+                        </a>
+                        <a href="{% url 'admin_panel:checkin_list' %}" 
+                           class="{% if 'checkin' in request.resolver_match.url_name %}bg-indigo-50 border-r-4 border-indigo-500 text-indigo-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                            <i class="fas fa-sign-in-alt mr-3"></i>
+                            <span>Check-In</span>
+                        </a>
+                    </div>
+                    
+                </nav>
+
+                <!-- User Profile & Logout -->
+                <div class="p-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-indigo-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                                {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Guest{% endif %}
+                            </p>
+                            <p class="text-xs text-gray-500">Administrator</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="window.toggleTheme(); return false;" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs py-1.5 px-3 rounded transition-colors duration-200">
+                            <i class="fas fa-moon mr-1"></i>
+                            Theme
+                        </button>
+                        <button onclick="window.logout(); return false;" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs py-1.5 px-3 rounded transition-colors duration-200">
+                            <i class="fas fa-sign-out-alt mr-1"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col min-h-0 lg:pl-0">
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 lg:pl-0">
+                <div class="flex items-center justify-between h-16 px-4 sm:px-6">
+                    <!-- Left Side: Mobile Menu + Title -->
+                    <div class="flex items-center space-x-4">
+                        <button id="sidebarToggle" class="lg:hidden text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md p-2">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        
+                        <div class="flex-1">
+                            <h1 class="text-xl sm:text-2xl font-semibold text-gray-900">{% block page_title %}Admin Panel{% endblock %}</h1>
+                            <p class="text-sm text-gray-500 hidden sm:block">{% block page_subtitle %}Manage your Invywed platform{% endblock %}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side: Actions & Profile -->
+                    <div class="flex items-center space-x-3 sm:space-x-4">
+                        <!-- Lihat Website Button -->
+                        <a href="{% url 'public_home' %}" target="_blank" class="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center shadow-md hover:shadow-lg">
+                            <i class="fas fa-external-link-alt mr-2"></i>
+                            <span class="hidden sm:inline">Lihat Website</span>
+                        </a>
+                        
+                        <!-- Editor Button -->
+                        <a href="{% url 'invitation_templates:template_editor_list' %}" class="bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                            <i class="fas fa-code mr-2"></i>
+                            <span class="hidden sm:inline">Editor</span>
+                        </a>
+                        
+                        <!-- Notifications -->
+                        <div class="relative">
+                            <button class="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                            </button>
+                        </div>
+
+                        <!-- User Profile Dropdown -->
+                        <div class="relative">
+                            <button id="userMenuButton" class="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-indigo-600 text-sm"></i>
+                                </div>
+                                <span class="hidden sm:block text-sm font-medium text-gray-700">
+                                    {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Guest{% endif %}
+                                </span>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user-cog mr-2"></i>
+                                    Profile Settings
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2"></i>
+                                    Preferences
+                                </a>
+                                <div class="border-t border-gray-100"></div>
+                                <a href="#" onclick="window.logout(); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto custom-scrollbar">
+                <div class="p-4 sm:p-6 lg:p-8">
+                    <!-- Messages -->
+                    {% if messages %}
+                        <div class="mb-6 space-y-3">
+                            {% for message in messages %}
+                                <div class="alert-{{ message.tags }} p-4 rounded-md border {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-700{% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %}">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0">
+                                            {% if message.tags == 'error' %}
+                                                <i class="fas fa-exclamation-circle"></i>
+                                            {% elif message.tags == 'success' %}
+                                                <i class="fas fa-check-circle"></i>
+                                            {% elif message.tags == 'warning' %}
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            {% else %}
+                                                <i class="fas fa-info-circle"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <p class="text-sm font-medium">{{ message }}</p>
+                                        </div>
+                                        <button onclick="this.parentElement.parentElement.parentElement.style.display='none'" class="flex-shrink-0 ml-4">
+                                            <i class="fas fa-times text-sm opacity-60 hover:opacity-100"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Page Content -->
+                    {% block content %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-6xl text-gray-300 mb-4"></i>
+                        <h2 class="text-2xl font-medium text-gray-900 mb-2">No Content</h2>
+                        <p class="text-gray-500">This page doesn't have any content yet.</p>
+                    </div>
+                    {% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 shadow-xl">
+            <div class="flex items-center space-x-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <p class="text-gray-900 font-medium">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Confirm Deletion</h3>
+                    <p class="text-sm text-gray-500">This action cannot be undone.</p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <div class="text-sm text-gray-700" id="deleteMessage">Are you sure you want to delete this item?</div>
+            </div>
+            
+            <div class="flex space-x-3 justify-end">
+                <button id="cancelDelete" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200">
+                    Cancel
+                </button>
+                <button id="confirmDelete" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors duration-200">
+                    <i class="fas fa-trash mr-2"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global JavaScript -->
+    <script>
+        // Global Variables
+        let deleteUrl = '';
+        let deleteCallback = null;
+
+        // Sidebar Toggle Functions
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        sidebarToggle?.addEventListener('click', toggleSidebar);
+        sidebarClose?.addEventListener('click', toggleSidebar);
+        sidebarOverlay?.addEventListener('click', toggleSidebar);
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            // #region agent log
+            if (e.target.closest && (e.target.closest('button[onclick*="showDelete"]') || e.target.closest('i.fa-trash'))) {
+                fetch('http://127.0.0.1:7243/ingest/0c6728ab-bf76-4261-a0e0-299c19c72270',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'base.html:documentClick',message:'Click detected on delete button',data:{targetTag:e.target.tagName,targetClass:e.target.className,closestButton:e.target.closest('button') ? e.target.closest('button').getAttribute('onclick') : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(function() {});
+            }
+            // #endregion
+            
+            if (window.innerWidth < 1024) {
+                if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                }
+            }
+        });
+
+        // User Dropdown Toggle
+        const userMenuButton = document.getElementById('userMenuButton');
+        const userDropdown = document.getElementById('userDropdown');
+
+        userMenuButton?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!userMenuButton.contains(e.target)) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+
+        // Delete Modal Functions
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDelete = document.getElementById('cancelDelete');
+        const confirmDelete = document.getElementById('confirmDelete');
+        const deleteMessage = document.getElementById('deleteMessage');
+
+        // Make delete modal function globally accessible
+        window.showDeleteModal = function(url, message, callback) {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0c6728ab-bf76-4261-a0e0-299c19c72270',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'base.html:showDeleteModal',message:'Function called',data:{url:url,hasDeleteModal:!!deleteModal,hasDeleteMessage:!!deleteMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(function() {});
+            // #endregion
+            
+            if (!deleteModal || !deleteMessage) {
+                console.error('Delete modal elements not found');
+                // #region agent log
+                fetch('http://127.0.0.1:7243/ingest/0c6728ab-bf76-4261-a0e0-299c19c72270',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'base.html:showDeleteModal',message:'Modal elements missing',data:{deleteModal:!!deleteModal,deleteMessage:!!deleteMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(function() {});
+                // #endregion
+                return;
+            }
+            
+            if (typeof message === 'undefined' || message === null) {
+                message = 'Are you sure you want to delete this item?';
+            }
+            if (typeof callback === 'undefined') {
+                callback = null;
+            }
+            
+            deleteUrl = url;
+            deleteCallback = callback;
+            
+            // Check if message contains HTML tags
+            if (typeof message === 'string' && message.includes('<') && message.includes('>')) {
+                deleteMessage.innerHTML = message;
+            } else {
+                deleteMessage.textContent = message;
+            }
+            deleteModal.classList.remove('hidden');
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0c6728ab-bf76-4261-a0e0-299c19c72270',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'base.html:showDeleteModal',message:'Modal shown successfully',data:{deleteModalVisible:!deleteModal.classList.contains('hidden')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(function() {});
+            // #endregion
+        };
+
+        function hideDeleteModal() {
+            deleteModal.classList.add('hidden');
+            deleteUrl = '';
+            deleteCallback = null;
+        }
+
+        cancelDelete?.addEventListener('click', hideDeleteModal);
+
+        confirmDelete?.addEventListener('click', async function() {
+            if (!deleteUrl) return;
+            
+            showLoading(true);
+            
+            try {
+                // CSRF disabled untuk development - tidak perlu token
+                const response = await fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // Get response text first to check content type
+                const responseText = await response.text();
+                
+                // Check if response is JSON
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    // Not JSON, likely HTML error page
+                    showAlert('error', `Error ${response.status}: ${response.statusText}. Server returned HTML instead of JSON.`);
+                    console.error('Non-JSON response received:', responseText.substring(0, 300));
+                    showLoading(false);
+                    hideDeleteModal();
+                    return;
+                }
+                
+                // Check if response was successful
+                if (!response.ok) {
+                    showAlert('error', data.message || `Error: ${response.status} ${response.statusText}`);
+                    showLoading(false);
+                    hideDeleteModal();
+                    return;
+                }
+                
+                if (data.status === 'success') {
+                    showAlert('success', data.message);
+                    if (deleteCallback) {
+                        deleteCallback();
+                    } else {
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                } else {
+                    showAlert('error', data.message || 'Failed to delete item');
+                }
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                showAlert('error', 'Network error occurred: ' + error.message);
+            } finally {
+                showLoading(false);
+                hideDeleteModal();
+            }
+        });
+
+        // Utility Functions
+        function getCsrfToken() {
+            // CSRF DISABLED untuk development - selalu return empty string
+            // TODO: Aktifkan kembali saat production dengan mengubah return '' menjadi logic di bawah
+            return ''; // CSRF disabled untuk development
+            
+            // Kode di bawah ini untuk production (uncomment saat production):
+            /*
+            // Try to get from input field first
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfInput && csrfInput.value) {
+                return csrfInput.value;
+            }
+            
+            // Try to get from cookie (Django stores CSRF token in cookie)
+            const name = 'csrftoken';
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === name) {
+                    return decodeURIComponent(value);
+                }
+            }
+            
+            return '';
+            */
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.toggle('hidden', !show);
+            }
+        }
+
+        function showAlert(type, message) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: type === 'success' ? 'Success!' : type === 'error' ? 'Error!' : 'Info',
+                    text: message,
+                    icon: type,
+                    timer: 3000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            } else {
+                alert(message);
+            }
+        }
+
+        // Make functions globally accessible
+        window.toggleTheme = function() {
+            showAlert('info', 'Theme toggle feature coming soon!');
+        };
+
+        window.logout = function() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '{% url "admin_panel:admin_logout" %}';
+            }
+        };
+
+        // Responsive behavior
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+            }
+        });
+
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('[class*="alert-"]');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0c6728ab-bf76-4261-a0e0-299c19c72270',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'base.html:DOMContentLoaded',message:'Base script loaded',data:{showDeleteModalExists:typeof window.showDeleteModal === 'function'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(function() {});
+            // #endregion
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+
